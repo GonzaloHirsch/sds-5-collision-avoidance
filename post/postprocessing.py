@@ -74,7 +74,7 @@ def parse_heuristic(filename):
     return heuristic
 
 
-def distance_travelled(times, positions):
+def distance_travelled(positions):
 
     x = np.array([point[X_VALUE] for point in positions[EVASIVE_PARTICLE_INDEX]])
     y = np.array([point[Y_VALUE] for point in positions[EVASIVE_PARTICLE_INDEX]])
@@ -219,7 +219,7 @@ def main():
 
         # Metrics calculations
         time_travel = elapsed_time(times)
-        distance_travel = distance_travelled(times, positions)
+        distance_travel = distance_travelled(positions)
         average_velocity = mean_velocity(velocities)
 
         #Saving metrics
