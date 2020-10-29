@@ -70,6 +70,8 @@ public class PredictiveCollisionAvoidance {
             // Updating the other particles
             this.updateObstacleParticles();
 
+            this.checkIfReachedGoal();
+
             // Updating the time
             this.totalTime += this.dt;
         }
@@ -108,6 +110,10 @@ public class PredictiveCollisionAvoidance {
         // TODO: UPDATE OBSTACLE PARTICLES, IF NEAR A WALL, REVERSE THE VELOCITY IN Y
     }
 
+    private void checkIfReachedGoal() {
+        // TODO: CHECK IF THE MAIN PARTICLE REACHED THE GOAL
+    }
+
     /////////////////////////////////////////////////////////////////////////////////////
     //                                 RESULT STORING
     /////////////////////////////////////////////////////////////////////////////////////
@@ -125,10 +131,10 @@ public class PredictiveCollisionAvoidance {
             // Creating the data structure for the particles
             double[][] particleData = new double[this.particleCount][4];
             for (int j = 0; j < this.particleCount; j++) {
-                particleData[j][0] = this.particles.get(j).getX();
-                particleData[j][1] = this.particles.get(j).getY();
-                particleData[j][2] = this.particles.get(j).getVx();
-                particleData[j][3] = this.particles.get(j).getVy();
+                particleData[j][0] = this.particles.get(j).x;
+                particleData[j][1] = this.particles.get(j).y;
+                particleData[j][2] = this.particles.get(j).vx;
+                particleData[j][3] = this.particles.get(j).vy;
             }
 
             // Creating the pair for the output list
