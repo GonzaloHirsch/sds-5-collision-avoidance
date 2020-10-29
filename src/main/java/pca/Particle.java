@@ -1,5 +1,7 @@
 package pca;
 
+import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
+
 public class Particle implements Comparable<Particle> {
     //////////////////////////////////////////////////////////////////////////////////////////
     //                                        PROPERTIES
@@ -11,18 +13,10 @@ public class Particle implements Comparable<Particle> {
     private final double mass;
     private final double comfortRadius;
 
-    /* Positions */
-    public double x = 0.0;
-    public double y = 0.0;
-    public double nextX = 0.0;
-    public double nextY = 0.0;
-
-    /* Velocities */
-    public double vx = 0.0;
-    public double vy = 0.0;
-    public double nextVx = 0.0;
-    public double nextVy = 0.0;
-
+    /* Position + Velocity */
+    private Vector2D position;
+    private Vector2D nextPosition;
+    private Vector2D velocity;
 
     //////////////////////////////////////////////////////////////////////////////////////////
     //                                        CONSTRUCTORS
@@ -56,11 +50,33 @@ public class Particle implements Comparable<Particle> {
         return comfortRadius;
     }
 
+    public Vector2D getPosition() {
+        return position;
+    }
+
+    public Vector2D getNextPosition() {
+        return nextPosition;
+    }
+
+    public Vector2D getVelocity() {
+        return velocity;
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////
     //                                        SETTERS
     //////////////////////////////////////////////////////////////////////////////////////////
 
+    public void setPosition(final double x, final double y) {
+        this.position = new Vector2D(x, y);
+    }
+
+    public void setNextPosition(final double x, final double y) {
+        this.nextPosition = new Vector2D(x, y);
+    }
+
+    public void setVelocity(final double vx, final double vy) {
+        this.velocity = new Vector2D(vx, vy);
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////
     //                                        METHODS
@@ -70,8 +86,8 @@ public class Particle implements Comparable<Particle> {
     public String toString() {
         return String.format("[Particle #%d] {x = %f, y = %f, radius = %f, mass = %f}\n",
                 this.id,
-                this.x,
-                this.y,
+                this.position.getX(),
+                this.position.getY(),
                 this.radius,
                 this.mass
         );
@@ -88,7 +104,7 @@ public class Particle implements Comparable<Particle> {
      * @return distance between the particles
      */
     public double distanceTo(Particle other) {
-        return Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.y - other.y, 2));
+        return this.position.distance(other.getPosition());
     }
 
     /**
@@ -99,6 +115,15 @@ public class Particle implements Comparable<Particle> {
      * @return distance between the particles
      */
     public double nextDistanceTo(Particle other) {
-        return Math.sqrt(Math.pow(this.nextX - other.x, 2) + Math.pow(this.nextY - other.y, 2));
+        return this.nextPosition.distance(other.getNextPosition());
+    }
+
+    /**
+     * Computes the velocity norm of the current particle
+     *
+     * @return Norm of the velocity vector
+     */
+    public double getVelocityNorm() {
+        return this.velocity.getNorm();
     }
 }

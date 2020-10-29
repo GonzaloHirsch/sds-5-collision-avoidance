@@ -131,10 +131,10 @@ public class PredictiveCollisionAvoidance {
             // Creating the data structure for the particles
             double[][] particleData = new double[this.particleCount][4];
             for (int j = 0; j < this.particleCount; j++) {
-                particleData[j][0] = this.particles.get(j).x;
-                particleData[j][1] = this.particles.get(j).y;
-                particleData[j][2] = this.particles.get(j).vx;
-                particleData[j][3] = this.particles.get(j).vy;
+                particleData[j][0] = this.particles.get(j).getPosition().getX();
+                particleData[j][1] = this.particles.get(j).getPosition().getY();
+                particleData[j][2] = this.particles.get(j).getVelocity().getX();
+                particleData[j][3] = this.particles.get(j).getVelocity().getY();
             }
 
             // Creating the pair for the output list
