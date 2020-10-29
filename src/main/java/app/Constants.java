@@ -1,3 +1,5 @@
+package app;
+
 public final class Constants {
     // Mass in kg
     public static final double SUN_MASS = 1988500 * Math.pow(10, 24);
