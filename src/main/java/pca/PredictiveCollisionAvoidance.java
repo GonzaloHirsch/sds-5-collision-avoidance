@@ -2,12 +2,10 @@ package pca;
 
 import app.Constants;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PredictiveCollisionAvoidance {
     // Time variables
@@ -35,13 +33,14 @@ public class PredictiveCollisionAvoidance {
     // Limit to obstacle choosing, it takes the closest 3 particles in order to compute
     private static final int OBSTACLE_LIMIT = 3;
     private static final int K_STEEPNESS = 1;
-
+    private static final int MAIN_PARTICLE_ID = 0;
     private static final Vector2D[] NW = new Vector2D[]{
             new Vector2D(0, -1),
             new Vector2D(0, 1),
             new Vector2D(1, 0),
             new Vector2D(-1, 0)
     };
+    private static final Double[] BASE_WEIGHTS = new Double[]{0.8, 0.15, 0.05};
 
     public PredictiveCollisionAvoidance(double dt2, double dt, List<Particle> particleList, double areaHeight, double areaWidth, double safeWallDistance) {
         this.dt2 = dt2;
@@ -68,10 +67,11 @@ public class PredictiveCollisionAvoidance {
     /////////////////////////////////////////////////////////////////////////////////////
 
     public List<ImmutablePair<Double, double[][]>> simulate() {
-        int[] closestIndexes;
-        double[] avoidanceForce;
-        double[][] avoidanceManeuvers;
+        List<MutablePair<Double, Integer>> closestCollisions;
+        Vector2D avoidanceForce;
+        List<Vector2D> avoidanceManeuvers;
         int index = -1;
+        Particle mainParticle = this.particles.get(MAIN_PARTICLE_ID);
 
         while (!this.reachedGoal) {
             // Checking if results can be stored
@@ -81,10 +81,10 @@ public class PredictiveCollisionAvoidance {
             this.computeInitialPositionPrediction();
 
             // Compute closest collisions
-            closestIndexes = this.computeClosestParticles();
+            closestCollisions = this.computeClosestParticles();
 
             // Compute avoidance maneuvers
-            avoidanceManeuvers = this.computeAvoidanceManeuvers(closestIndexes);
+            avoidanceManeuvers = this.computeAvoidanceManeuvers(mainParticle, closestCollisions);
 
             // Compute total avoidance force
             avoidanceForce = this.computeTotalAvoidanceForce(avoidanceManeuvers);
@@ -147,22 +147,91 @@ public class PredictiveCollisionAvoidance {
         // TODO: CALCULATE THE INITIAL PREDICTION FOR THE MAIN PARTICLE
     }
 
-    private int[] computeClosestParticles() {
+    private List<MutablePair<Double, Integer>> computeClosestParticles() {
         // TODO: GET THE CLOSEST N COLLISIONS IN ORDER TO CALCULATE
         return null;
     }
 
-    private double[][] computeAvoidanceManeuvers(int[] particlesToCollide) {
-        // TODO: COMPUTE FORCES TO AVOID EACH COLLISION
-        return null;
+    /**
+     * Computes the possible avoidance maneuvers given a list of sorted possible collisions
+     * @param mainParticle is the main particle that is being studied
+     * @param particlesToCollide list of MutablePairs being the time in left and the particle index in right
+     * @return a List of Vector2 with the force for each collision
+     */
+    private List<Vector2D> computeAvoidanceManeuvers(Particle mainParticle, List<MutablePair<Double, Integer>> particlesToCollide) {
+        // List of avoidance maneuver forces
+        List<Vector2D> forces = new ArrayList<>(particlesToCollide.size());
+
+        // Future positions of each particle
+        Vector2D ci, cj;
+
+        // Other particle to calculate collision
+        Particle other;
+
+        // D parameter calculated
+        double d;
+
+        // Iterate each possible collision
+        for (MutablePair<Double, Integer> col : particlesToCollide){
+            other = this.particles.get(col.right);
+            ci = mainParticle.getDesiredVelocity().scalarMultiply(col.left).add(mainParticle.getPosition());
+            cj = mainParticle.getVelocity().scalarMultiply(col.left).add(other.getPosition());
+            d = ci.subtract(mainParticle.getPosition()).getNorm() + (ci.subtract(cj).getNorm() - mainParticle.getRadius() - other.getRadius());
+            // TODO: COMPUTE FORCE GIVEN D
+        }
+        return forces;
     }
 
-    private double[] computeTotalAvoidanceForce(double[][] maneuvers) {
-        // TODO: COMPUTE TOTAL FORCE IN ORDER TO AVOID COLLISION
-        return null;
+    /**
+     * Computes the total avoidance force given a list of maneuver forces to be applied
+     * @param maneuvers List of forces to be applied
+     * @return a total force calculated as the weighted sum
+     */
+    private Vector2D computeTotalAvoidanceForce(List<Vector2D> maneuvers) {
+        // Computing the weights
+        List<Double> weights = this.computeWeights(maneuvers.size());
+
+        // Total force to be returned
+        Vector2D totalForce = Vector2D.ZERO;
+
+        // Compute the weighted sum
+        for (int i = 0; i < maneuvers.size(); i++){
+            totalForce.add(maneuvers.get(i).scalarMultiply(weights.get(i)));
+        }
+
+        return totalForce;
     }
 
-    private void updateMainParticle(double[] avoidanceForce) {
+    /**
+     * Computes the total weights to be used, in case there are less than the limit of obstacles
+     * @param amountOfForces number of forces to average
+     * @return List with ordered weights
+     */
+    private List<Double> computeWeights(int amountOfForces){
+        List<Double> values = new ArrayList<>(amountOfForces);
+
+        // Checking if no calculations are needed
+        if (amountOfForces == OBSTACLE_LIMIT){
+            values.addAll(Arrays.asList(BASE_WEIGHTS));
+        } else {
+            // Compute the total weight to be redistributed
+            double valueToDistribute = 0;
+            for (int i = amountOfForces; i < BASE_WEIGHTS.length; i++){
+                valueToDistribute += BASE_WEIGHTS[i];
+            }
+
+            // Equally redistribute among remaining
+            valueToDistribute /= amountOfForces;
+
+            // Insert new values to weights list
+            for (int i = 0; i < amountOfForces; i++){
+                values.add(BASE_WEIGHTS[i] + valueToDistribute);
+            }
+        }
+        return values;
+    }
+
+    private void updateMainParticle(Vector2D avoidanceForce) {
         // TODO: UPDATE THE MAIN PARTICLE VELOCITY
     }
 
