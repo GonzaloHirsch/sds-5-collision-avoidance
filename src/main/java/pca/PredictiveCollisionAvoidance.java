@@ -235,8 +235,22 @@ public class PredictiveCollisionAvoidance {
         // TODO: UPDATE THE MAIN PARTICLE VELOCITY
     }
 
+    /**
+     * Updates the position of the obstacle particles, and if necessary, it reverses the velocity on wall collision
+     */
     private void updateObstacleParticles() {
-        // TODO: UPDATE OBSTACLE PARTICLES, IF NEAR A WALL, REVERSE THE VELOCITY IN Y
+        Vector2D newPosition, newVelocity;
+        for (Particle p :this.particles.values()){
+            if (p.getId() > 0){
+                // Update the positions
+                p.setPosition(p.getVelocity().scalarMultiply(this.dt).add(p.getPosition()));
+
+                // Check top and bottom wall, if true, velocity should be reversed
+                if (Math.abs(p.getPosition().getY() - this.areaHeight) < p.getRadius() || p.getPosition().getY() < p.getRadius()){
+                    p.setVelocity(p.getVelocity().scalarMultiply(-1));
+                }
+            }
+        }
     }
 
     private void checkIfReachedGoal() {

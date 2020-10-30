@@ -81,16 +81,32 @@ public class Particle implements Comparable<Particle> {
         this.position = new Vector2D(x, y);
     }
 
+    public void setPosition(Vector2D v) {
+        this.position = v;
+    }
+
     public void setNextPosition(final double x, final double y) {
         this.nextPosition = new Vector2D(x, y);
+    }
+
+    public void setNextPosition(Vector2D v) {
+        this.nextPosition = v;
     }
 
     public void setVelocity(final double vx, final double vy) {
         this.velocity = new Vector2D(vx, vy);
     }
 
+    public void setVelocity(Vector2D v) {
+        this.velocity = v;
+    }
+
     public void setDesiredVelocity(final double vx, final double vy) {
         this.desiredVelocity = new Vector2D(vx, vy);
+    }
+
+    public void setDesiredVelocity(Vector2D v) {
+        this.desiredVelocity = v;
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
