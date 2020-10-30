@@ -14,8 +14,10 @@ Y = 2
 VX = 3
 VY = 4
 
-def generate_people(width, height, people_count, people_radius, people_velocity, border_limit):
+def generate_people(width, height, people_count, people_radius, people_velocity, border_limit, main_radius, main_comfort_radius):
     people_data = []
+
+    people_data.append([main_radius, main_comfort_radius, main_comfort_radius, 0, 0])
 
     # Determine limits to be used for X and Y
     x_left, x_right = border_limit, width - border_limit
@@ -99,7 +101,7 @@ def main():
     args = parser.parse_args()
 
     print("Generating people information...")
-    people = generate_people(float(args.area_width), float(args.area_height), float(args.people_count), float(args.people_radius), float(args.people_velocity), float(args.border_limit))
+    people = generate_people(float(args.area_width), float(args.area_height), float(args.people_count), float(args.people_radius), float(args.people_velocity), float(args.border_limit), float(args.main_radius), float(args.comfort_radius))
     generate_files(people, float(args.area_width), float(args.area_height))
 
 # call main
