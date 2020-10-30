@@ -99,17 +99,10 @@ def elapsed_time(times):
     return times[final_idx]
 
 
-def mean_velocity(velocities):
-    vx = np.array([velocity[X_VALUE] for velocity in velocities[EVASIVE_PARTICLE_INDEX]])
-    vy = np.array([velocity[Y_VALUE] for velocity in velocities[EVASIVE_PARTICLE_INDEX]])
-
-    v_module = np.sqrt(vx**2+vy**2)
-
-    cumulative_velocity = np.sum(v_module)
-    average_velocity = cumulative_velocity / len(velocities[EVASIVE_PARTICLE_INDEX])
-
+def mean_velocity(times, distance):
+    final_idx = len(times) - 1
+    average_velocity = distance / times[final_idx]
     print("The mean velocity of the particle was " + str(average_velocity))
-
     return average_velocity
 
 
@@ -220,7 +213,7 @@ def main():
         # Metrics calculations
         time_travel = elapsed_time(times)
         distance_travel = distance_travelled(positions)
-        average_velocity = mean_velocity(velocities)
+        average_velocity = mean_velocity(times, distance_travel)
 
         #Saving metrics
         save_results(p, time_travel, distance_travel, average_velocity)
