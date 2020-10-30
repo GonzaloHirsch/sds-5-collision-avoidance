@@ -185,22 +185,24 @@ public class Particle implements Comparable<Particle> {
     }
 
     /**
-     * Given a time, will compute the expected position of the particle after said
-     * time has passed.
+     * Given a time and a force, will compute the new velocity
      *
+     * @param forces being applied to the particle
      * @param time how much time will pass for our prediction
-     * @return Vector2D with the coordinates of the next position
      */
-    public Vector2D calculateFuturePostion(double time) {
-        return this.getPosition().add(this.getVelocity().scalarMultiply(time));
+    public void updateVelocity(Vector2D forces, double time) {
+        this.setVelocity(this.getVelocity().add(forces.scalarMultiply(time)));
     }
 
     /**
-     * Compute the predicted position after certain time and having a certain velocity
+     * Given a time and a force, will compute the new position
+     *
+     * @param time how much time will pass for our prediction
      */
-    public Vector2D calculateFuturePostionWithPreferredVelocity(double time, Vector2D velocity) {
-        return this.getPosition().add(velocity.scalarMultiply(time));
+    public void updatePosition(double time) {
+        this.setPosition(this.getPosition().add(this.getVelocity().scalarMultiply(time)));
     }
+
 
     /**
      * Tells us if there will be a collision and if it is within the anticipated time

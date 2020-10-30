@@ -252,10 +252,10 @@ public class PredictiveCollisionAvoidance {
     private void updateMainParticle(Vector2D af, Vector2D wf, Vector2D gf) {
         // Updating the main particles velocity
         Vector2D forces = af.add(wf).add(gf);
-        this.mainParticle.setVelocity(this.mainParticle.getVelocity().add(forces.scalarMultiply(this.dt)));
+        this.mainParticle.updateVelocity(forces, this.dt);
 
         // Updating main particles positions
-        this.mainParticle.setPosition(this.mainParticle.getPosition().add(this.mainParticle.getVelocity().scalarMultiply(this.dt)));
+        this.mainParticle.updatePosition(this.dt);
     }
 
     /**
