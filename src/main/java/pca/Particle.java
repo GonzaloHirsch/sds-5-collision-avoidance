@@ -158,7 +158,7 @@ public class Particle implements Comparable<Particle> {
         return this.velocity.getNorm();
     }
 
-    private Vector2D getGoalForce(Vector2D goal) {
+    public Vector2D getGoalForce(Vector2D goal) {
         return this.getNVector(goal)
                 .scalarMultiply(this.preferredSpeed)
                 .subtract(this.velocity)
@@ -170,4 +170,84 @@ public class Particle implements Comparable<Particle> {
         N.normalize();
         return N;
     }
+
+    /**
+     * Indicates if a particle is invading the personal space of the current one.
+     *
+     * @param particle coming near this
+     * @return boolean indicating if personal space was invaded
+     */
+    public boolean personalSpaceInvadedBy(Particle particle) {
+        double distance = this.getPosition().subtract(particle.getPosition()).getNorm();
+        return distance <= this.getComfortRadius() + particle.getRadius();
+    }
+
+    /**
+     * Given a time, will compute the expected position of the particle after said
+     * time has passed.
+     *
+     * @param time how much time will pass for our prediction
+     * @return Vector2D with the coordinates of the next position
+     */
+    public Vector2D calculateFuturePostion(double time) {
+        return this.getPosition().add(this.getVelocity().scalarMultiply(time));
+    }
+
+    /**
+     * Compute the predicted position after certain time and having a certain velocity
+     */
+    public Vector2D calculateFuturePostionWithPreferredVelocity(double time, Vector2D velocity) {
+        return this.getPosition().add(velocity.scalarMultiply(time));
+    }
+
+    /**
+     * Tells us if there will be a collision and if it is within the anticipated time
+     * @param particle to analyze with current
+     * @param desiredVelocity of the current particle
+     * @param anticipationTime collisions within this time will create an evasive force over the current particle
+     * @return boolean
+     */
+    public boolean collisionIsNear(Particle particle, Vector2D desiredVelocity, double anticipationTime) {
+        // Current variables
+        double xi  = this.getPosition().getX();
+        double yi  = this.getPosition().getY();
+
+        // Particle variables
+        double xj  = particle.getPosition().getX();
+        double yj  = particle.getPosition().getY();
+
+        // Velocity variables
+        Vector2D v = desiredVelocity.subtract(particle.getVelocity());
+        double vx = v.getX();
+        double vy = v.getY();
+
+        // Quadratic variables
+        double c = xj*xj + xi*xi + yj*yj + yi*yi - 2*(xj*xi + yj*yi) - Math.pow(this.getComfortRadius() + particle.getRadius(), 2);
+        double b = 2*vx*(xi-xj) + 2*vy*(yi-yj);
+        double a = vx*vx + vy*vy;
+        double value = b * b - 4.0 * a * c;
+
+        // No solution means no collision
+        if (value < 0) {
+            return false;
+        }
+
+        // Solutions
+        double t1 = (-b + Math.sqrt(value)) / (2.0 * a);
+        double t2 = (-b + Math.sqrt(value)) / (2.0 * a);
+
+        // One solution or both negative means no collision
+        if (t1 == t2 || (t1 < 0.0 && t2 < 0.0)) {
+            return false;
+        } else if (t1 * t2 < 0) {
+            // If one is negative and the other one positive,
+            // then a collision is imminent
+            return true;
+        } else {
+            // Both are positive
+            return Math.max(t1,t2) <= anticipationTime;
+        }
+
+    }
+
 }

@@ -11,6 +11,7 @@ public class PredictiveCollisionAvoidance {
     // Time variables
     private final double dt2;
     private final double dt;
+    private final double anticipationTime;
     private double totalTime;
 
     // Goal variables
@@ -25,6 +26,7 @@ public class PredictiveCollisionAvoidance {
     // Particle data
     private final Map<Integer, Particle> particles;
     private final int particleCount;
+    private final Particle mainParticle;
 
     // Results
     private final List<ImmutablePair<Double, double[][]>> results = new ArrayList<>();
@@ -34,13 +36,13 @@ public class PredictiveCollisionAvoidance {
     private static final int OBSTACLE_LIMIT = 3;
     private static final int K_STEEPNESS = 1;
     private static final int MAIN_PARTICLE_ID = 0;
+    private static final Double[] BASE_WEIGHTS = new Double[]{0.8, 0.15, 0.05};
     private static final Vector2D[] NW = new Vector2D[]{
             new Vector2D(0, -1),
             new Vector2D(0, 1),
             new Vector2D(1, 0),
             new Vector2D(-1, 0)
     };
-    private static final Double[] BASE_WEIGHTS = new Double[]{0.8, 0.15, 0.05};
 
     public PredictiveCollisionAvoidance(double dt2, double dt, List<Particle> particleList, double areaHeight, double areaWidth, double safeWallDistance) {
         this.dt2 = dt2;
@@ -60,6 +62,8 @@ public class PredictiveCollisionAvoidance {
                 areaWidth - this.particles.get(0).getComfortRadius(),
                 areaHeight - this.particles.get(0).getComfortRadius()
         );
+        this.mainParticle = this.particles.get(0);
+        this.anticipationTime = 1.0; // FIXME! Pass as parameter
     }
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -150,6 +154,27 @@ public class PredictiveCollisionAvoidance {
     private List<MutablePair<Double, Integer>> computeClosestParticles() {
         // TODO: GET THE CLOSEST N COLLISIONS IN ORDER TO CALCULATE
         return null;
+    }
+
+    /**
+     * Tells us if there will be a collision and if it is within the anticipated time
+     * @param p particle we will use to analyze future collisions with the main particle
+     * @return boolean meaning the collision will happen soon
+     */
+    private boolean collisionWithMainParticleIsNear(Particle p) {
+        Vector2D desiredVelocity = this.computeDesiredVelocityOfMainParticle();
+        return this.mainParticle.collisionIsNear(p, desiredVelocity, this.anticipationTime);
+    }
+
+    /**
+     * Infer the desired velocity of the main particle as the sum of its actual velocity and
+     * the velocity derived by virtually applying the goal force and the wall repulsive forces.
+     * @return Vector2D of the desired velocity
+     */
+    private Vector2D computeDesiredVelocityOfMainParticle() {
+        // Forces are the sum of the wall forces and the goal force
+        Vector2D forces = this.computeWallAvoidanceForce(this.mainParticle).add(this.mainParticle.getGoalForce(this.goal));
+        return this.mainParticle.getVelocity().add(forces.scalarMultiply(this.dt));
     }
 
     /**
@@ -256,6 +281,7 @@ public class PredictiveCollisionAvoidance {
     private void checkIfReachedGoal() {
         // TODO: CHECK IF THE MAIN PARTICLE REACHED THE GOAL
     }
+
 
     /////////////////////////////////////////////////////////////////////////////////////
     //                                 RESULT STORING
