@@ -46,7 +46,10 @@ public class PredictiveCollisionAvoidance {
             new Vector2D(-1, 0)
     };
     private static final Supplier<List<MutablePair<Double, Integer>>> LIST_SUPPLIER = ArrayList::new;
-
+    private static final double D_MIN = 0.7;
+    private static final double D_MID = 2 * D_MIN;
+    private static final double D_MAX = (1 / D_MIN) + D_MID;
+    private static final double FD = (1 / D_MIN);
 
     public PredictiveCollisionAvoidance(double dt2, double dt, List<Particle> particleList, double areaHeight, double areaWidth, double safeWallDistance) {
         this.dt2 = dt2;
@@ -139,7 +142,7 @@ public class PredictiveCollisionAvoidance {
         for (int i = 0; i < Constants.WALLS; i++) {
             Vector2D wallForce = (dw[i] - this.mainParticle.getRadius() >= this.safeWallDistance)
                     ? Vector2D.ZERO
-                    : NW[i].scalarMultiply(this.getWallForceScalar(this.mainParticle, dw[i]));
+                    : NW[i].scalarMultiply(this.getWallForceScalar(dw[i]));
 
             totalForce.add(wallForce);
         }
@@ -147,23 +150,39 @@ public class PredictiveCollisionAvoidance {
         return totalForce;
     }
 
-    private double getWallForceScalar(Particle particle, double dw) {
-        return (this.safeWallDistance + particle.getRadius() - dw) / Math.pow(dw - particle.getRadius(), K_STEEPNESS);
+    /**
+     * Calculating the wall avoidance force scalar
+     * @param dw distance to the wall
+     * @return double with the magnitude of the force
+     */
+    private double getWallForceScalar(double dw) {
+        return (this.safeWallDistance + this.mainParticle.getRadius() - dw) / Math.pow(dw - this.mainParticle.getRadius(), K_STEEPNESS);
     }
 
+    /**
+     * Computes the closest particles to the main particle, computing also the desired velocity
+     * @param wf Wall avoidance force
+     * @param gf Goal driving force
+     * @return List of pairs containing the time to collide and the particle involved
+     */
     private List<MutablePair<Double, Integer>> computeClosestParticles(Vector2D wf, Vector2D gf) {
         // TreeSet for ordered results
         TreeSet<MutablePair<Double, Integer>> orderedCollisions = new TreeSet<>(Comparator.comparing(o -> o.left));
 
+        // Computing and storing the desired velocity
         Vector2D desiredVelocity = this.mainParticle.getVelocity().add(wf.add(gf).scalarMultiply(this.dt));
         this.mainParticle.setDesiredVelocity(desiredVelocity);
 
         Particle p;
         Optional<Double> col;
-        for (int i = 1; i < this.particleCount; i++){
+        for (int i = 1; i < this.particleCount; i++) {
             p = this.particles.get(i);
+
+            // Calculating collisions
             col = this.mainParticle.collisionIsNear(p, this.anticipationTime);
-            if (col.isPresent()){
+
+            // If the collision is present, add the pair
+            if (col.isPresent()) {
                 orderedCollisions.add(new MutablePair<>(col.get(), i));
             }
         }
@@ -173,6 +192,7 @@ public class PredictiveCollisionAvoidance {
 
     /**
      * Computes the possible avoidance maneuvers given a list of sorted possible collisions
+     *
      * @param particlesToCollide list of MutablePairs being the time in left and the particle index in right
      * @return a List of Vector2 with the force for each collision
      */
@@ -187,21 +207,31 @@ public class PredictiveCollisionAvoidance {
         Particle other;
 
         // D parameter calculated
-        double d;
+        double d, fd;
 
         // Iterate each possible collision
-        for (MutablePair<Double, Integer> col : particlesToCollide){
+        for (MutablePair<Double, Integer> col : particlesToCollide) {
             other = this.particles.get(col.right);
+
+            // Calculating future positions
             ci = this.mainParticle.getDesiredVelocity().scalarMultiply(col.left).add(this.mainParticle.getPosition());
             cj = this.mainParticle.getVelocity().scalarMultiply(col.left).add(other.getPosition());
+
+            // Calculating D parameter
             d = ci.subtract(this.mainParticle.getPosition()).getNorm() + (ci.subtract(cj).getNorm() - this.mainParticle.getRadius() - other.getRadius());
-            // TODO: COMPUTE FORCE GIVEN D
+
+            // Calculating the force module
+            fd = this.computeForceModule(d);
+
+            // Adding the force to the list, using the direction
+            forces.add(ci.subtract(cj).normalize().scalarMultiply(fd));
         }
         return forces;
     }
 
     /**
      * Computes the total avoidance force given a list of maneuver forces to be applied
+     *
      * @param maneuvers List of forces to be applied
      * @return a total force calculated as the weighted sum
      */
@@ -213,7 +243,7 @@ public class PredictiveCollisionAvoidance {
         Vector2D totalForce = Vector2D.ZERO;
 
         // Compute the weighted sum
-        for (int i = 0; i < maneuvers.size(); i++){
+        for (int i = 0; i < maneuvers.size(); i++) {
             totalForce.add(maneuvers.get(i).scalarMultiply(weights.get(i)));
         }
 
@@ -222,19 +252,20 @@ public class PredictiveCollisionAvoidance {
 
     /**
      * Computes the total weights to be used, in case there are less than the limit of obstacles
+     *
      * @param amountOfForces number of forces to average
      * @return List with ordered weights
      */
-    private List<Double> computeWeights(int amountOfForces){
+    private List<Double> computeWeights(int amountOfForces) {
         List<Double> values = new ArrayList<>(amountOfForces);
 
         // Checking if no calculations are needed
-        if (amountOfForces == OBSTACLE_LIMIT){
+        if (amountOfForces == OBSTACLE_LIMIT) {
             values.addAll(Arrays.asList(BASE_WEIGHTS));
         } else {
             // Compute the total weight to be redistributed
             double valueToDistribute = 0;
-            for (int i = amountOfForces; i < BASE_WEIGHTS.length; i++){
+            for (int i = amountOfForces; i < BASE_WEIGHTS.length; i++) {
                 valueToDistribute += BASE_WEIGHTS[i];
             }
 
@@ -242,13 +273,19 @@ public class PredictiveCollisionAvoidance {
             valueToDistribute /= amountOfForces;
 
             // Insert new values to weights list
-            for (int i = 0; i < amountOfForces; i++){
+            for (int i = 0; i < amountOfForces; i++) {
                 values.add(BASE_WEIGHTS[i] + valueToDistribute);
             }
         }
         return values;
     }
 
+    /**
+     * Updates the main particle velocity and position given the forces
+     * @param af Avoidance force
+     * @param wf Wall avoidance force
+     * @param gf Goal driving force
+     */
     private void updateMainParticle(Vector2D af, Vector2D wf, Vector2D gf) {
         // Updating the main particles velocity
         Vector2D forces = af.add(wf).add(gf);
@@ -262,13 +299,13 @@ public class PredictiveCollisionAvoidance {
      * Updates the position of the obstacle particles, and if necessary, it reverses the velocity on wall collision
      */
     private void updateObstacleParticles() {
-        for (Particle p :this.particles.values()){
-            if (p.getId() > 0){
+        for (Particle p : this.particles.values()) {
+            if (p.getId() > 0) {
                 // Update the positions
                 p.setPosition(p.getVelocity().scalarMultiply(this.dt).add(p.getPosition()));
 
                 // Check top and bottom wall, if true, velocity should be reversed
-                if (Math.abs(p.getPosition().getY() - this.areaHeight) < p.getRadius() || p.getPosition().getY() < p.getRadius()){
+                if (Math.abs(p.getPosition().getY() - this.areaHeight) < p.getRadius() || p.getPosition().getY() < p.getRadius()) {
                     p.setVelocity(p.getVelocity().scalarMultiply(-1));
                 }
             }
@@ -283,6 +320,23 @@ public class PredictiveCollisionAvoidance {
         return distanceToGoal <= this.mainParticle.getRadius();
     }
 
+    /**
+     * Computes the f(D) function, the parameters are fixed and can be explored with this link:
+     * https://www.desmos.com/calculator/rdw4w5iizh
+     * @param d D value to be used
+     * @return magnitude of the force
+     */
+    private double computeForceModule(double d) {
+        if (d < D_MIN) {
+            return 1 / d;
+        } else if (d < D_MID) {
+            return FD;
+        } else if (d < D_MAX) {
+            return (-1 * d) + D_MAX;
+        } else {
+            return 0;
+        }
+    }
 
     /////////////////////////////////////////////////////////////////////////////////////
     //                                 RESULT STORING
