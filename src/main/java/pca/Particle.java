@@ -20,6 +20,7 @@ public class Particle implements Comparable<Particle> {
     private Vector2D position;
     private Vector2D nextPosition;
     private Vector2D velocity;
+    private Vector2D desiredVelocity;
 
     //////////////////////////////////////////////////////////////////////////////////////////
     //                                        CONSTRUCTORS
@@ -68,6 +69,10 @@ public class Particle implements Comparable<Particle> {
         return velocity;
     }
 
+    public Vector2D getDesiredVelocity() {
+        return desiredVelocity;
+    }
+
     //////////////////////////////////////////////////////////////////////////////////////////
     //                                        SETTERS
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -82,6 +87,10 @@ public class Particle implements Comparable<Particle> {
 
     public void setVelocity(final double vx, final double vy) {
         this.velocity = new Vector2D(vx, vy);
+    }
+
+    public void setDesiredVelocity(final double vx, final double vy) {
+        this.desiredVelocity = new Vector2D(vx, vy);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
