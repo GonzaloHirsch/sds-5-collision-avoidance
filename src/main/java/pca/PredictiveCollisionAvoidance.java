@@ -104,7 +104,7 @@ public class PredictiveCollisionAvoidance {
             this.updateObstacleParticles();
 
             // Checking if the main particle reached the goal
-            this.checkIfReachedGoal();
+            this.reachedGoal = this.checkIfReachedGoal();
 
             // Updating the time
             this.totalTime += this.dt;
@@ -250,8 +250,12 @@ public class PredictiveCollisionAvoidance {
     }
 
     private void updateMainParticle(Vector2D af, Vector2D wf, Vector2D gf) {
-        
-        // TODO: UPDATE THE MAIN PARTICLE VELOCITY
+        // Updating the main particles velocity
+        Vector2D forces = af.add(wf).add(gf);
+        this.mainParticle.setVelocity(this.mainParticle.getVelocity().add(forces.scalarMultiply(this.dt)));
+
+        // Updating main particles positions
+        this.mainParticle.setPosition(this.mainParticle.getPosition().add(this.mainParticle.getVelocity().scalarMultiply(this.dt)));
     }
 
     /**
@@ -271,8 +275,12 @@ public class PredictiveCollisionAvoidance {
         }
     }
 
-    private void checkIfReachedGoal() {
-        // TODO: CHECK IF THE MAIN PARTICLE REACHED THE GOAL
+    /**
+     * Checks if the distance to the goal is within the main particles radius
+     */
+    private boolean checkIfReachedGoal() {
+        double distanceToGoal = this.mainParticle.getPosition().subtract(goal).getNorm();
+        return distanceToGoal <= this.mainParticle.getRadius();
     }
 
 
