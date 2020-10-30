@@ -6,6 +6,8 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 
 import java.util.*;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class PredictiveCollisionAvoidance {
     // Time variables
@@ -43,6 +45,8 @@ public class PredictiveCollisionAvoidance {
             new Vector2D(1, 0),
             new Vector2D(-1, 0)
     };
+    private static final Supplier<List<MutablePair<Double, Integer>>> LIST_SUPPLIER = ArrayList::new;
+
 
     public PredictiveCollisionAvoidance(double dt2, double dt, List<Particle> particleList, double areaHeight, double areaWidth, double safeWallDistance) {
         this.dt2 = dt2;
@@ -62,7 +66,7 @@ public class PredictiveCollisionAvoidance {
                 areaWidth - this.particles.get(0).getComfortRadius(),
                 areaHeight - this.particles.get(0).getComfortRadius()
         );
-        this.mainParticle = this.particles.get(0);
+        this.mainParticle = this.particles.get(MAIN_PARTICLE_ID);
         this.anticipationTime = 1.0; // FIXME! Pass as parameter
     }
 
@@ -72,33 +76,34 @@ public class PredictiveCollisionAvoidance {
 
     public List<ImmutablePair<Double, double[][]>> simulate() {
         List<MutablePair<Double, Integer>> closestCollisions;
-        Vector2D avoidanceForce;
+        Vector2D avoidanceForce, wallForce, goalForce;
         List<Vector2D> avoidanceManeuvers;
         int index = -1;
-        Particle mainParticle = this.particles.get(MAIN_PARTICLE_ID);
 
         while (!this.reachedGoal) {
             // Checking if results can be stored
             index = this.checkAndStoreResults(index);
 
-            // Predict initial position
-            this.computeInitialPositionPrediction();
+            // Computing forces
+            wallForce = this.computeWallAvoidanceForce();
+            goalForce = this.mainParticle.getGoalForce(this.goal);
 
             // Compute closest collisions
-            closestCollisions = this.computeClosestParticles();
+            closestCollisions = this.computeClosestParticles(wallForce, goalForce);
 
             // Compute avoidance maneuvers
-            avoidanceManeuvers = this.computeAvoidanceManeuvers(mainParticle, closestCollisions);
+            avoidanceManeuvers = this.computeAvoidanceManeuvers(closestCollisions);
 
             // Compute total avoidance force
             avoidanceForce = this.computeTotalAvoidanceForce(avoidanceManeuvers);
 
             // Updating the main particle
-            this.updateMainParticle(avoidanceForce);
+            this.updateMainParticle(avoidanceForce, wallForce, goalForce);
 
             // Updating the other particles
             this.updateObstacleParticles();
 
+            // Checking if the main particle reached the goal
             this.checkIfReachedGoal();
 
             // Updating the time
@@ -116,26 +121,25 @@ public class PredictiveCollisionAvoidance {
      * Computes the force applied to the particles by the walls in order
      * to avoid collisions with them and remain at a safe distance.
      *
-     * @param particle to analyze
      * @return vector with the resulting force applied to the particle
      */
-    private Vector2D computeWallAvoidanceForce(Particle particle) {
+    private Vector2D computeWallAvoidanceForce() {
 
         // Minimum distance to the walls
         final double[] dw = new double[]{
-                this.areaHeight - particle.getPosition().getY(),
-                particle.getPosition().getY(),
-                particle.getPosition().getX(),
-                areaWidth - particle.getPosition().getX()
+                this.areaHeight - this.mainParticle.getPosition().getY(),
+                this.mainParticle.getPosition().getY(),
+                this.mainParticle.getPosition().getX(),
+                areaWidth - this.mainParticle.getPosition().getX()
         };
 
         Vector2D totalForce = Vector2D.ZERO;
 
         // Summing up the force each wall applies to the particle
         for (int i = 0; i < Constants.WALLS; i++) {
-            Vector2D wallForce = (dw[i] - particle.getRadius() >= this.safeWallDistance)
+            Vector2D wallForce = (dw[i] - this.mainParticle.getRadius() >= this.safeWallDistance)
                     ? Vector2D.ZERO
-                    : NW[i].scalarMultiply(this.getWallForceScalar(particle, dw[i]));
+                    : NW[i].scalarMultiply(this.getWallForceScalar(this.mainParticle, dw[i]));
 
             totalForce.add(wallForce);
         }
@@ -147,43 +151,32 @@ public class PredictiveCollisionAvoidance {
         return (this.safeWallDistance + particle.getRadius() - dw) / Math.pow(dw - particle.getRadius(), K_STEEPNESS);
     }
 
-    private void computeInitialPositionPrediction() {
-        // TODO: CALCULATE THE INITIAL PREDICTION FOR THE MAIN PARTICLE
-    }
+    private List<MutablePair<Double, Integer>> computeClosestParticles(Vector2D wf, Vector2D gf) {
+        // TreeSet for ordered results
+        TreeSet<MutablePair<Double, Integer>> orderedCollisions = new TreeSet<>(Comparator.comparing(o -> o.left));
 
-    private List<MutablePair<Double, Integer>> computeClosestParticles() {
-        // TODO: GET THE CLOSEST N COLLISIONS IN ORDER TO CALCULATE
-        return null;
-    }
+        Vector2D desiredVelocity = this.mainParticle.getVelocity().add(wf.add(gf).scalarMultiply(this.dt));
+        this.mainParticle.setDesiredVelocity(desiredVelocity);
 
-    /**
-     * Tells us if there will be a collision and if it is within the anticipated time
-     * @param p particle we will use to analyze future collisions with the main particle
-     * @return boolean meaning the collision will happen soon
-     */
-    private boolean collisionWithMainParticleIsNear(Particle p) {
-        Vector2D desiredVelocity = this.computeDesiredVelocityOfMainParticle();
-        return this.mainParticle.collisionIsNear(p, desiredVelocity, this.anticipationTime);
-    }
+        Particle p;
+        Optional<Double> col;
+        for (int i = 1; i < this.particleCount; i++){
+            p = this.particles.get(i);
+            col = this.mainParticle.collisionIsNear(p, this.anticipationTime);
+            if (col.isPresent()){
+                orderedCollisions.add(new MutablePair<>(col.get(), i));
+            }
+        }
 
-    /**
-     * Infer the desired velocity of the main particle as the sum of its actual velocity and
-     * the velocity derived by virtually applying the goal force and the wall repulsive forces.
-     * @return Vector2D of the desired velocity
-     */
-    private Vector2D computeDesiredVelocityOfMainParticle() {
-        // Forces are the sum of the wall forces and the goal force
-        Vector2D forces = this.computeWallAvoidanceForce(this.mainParticle).add(this.mainParticle.getGoalForce(this.goal));
-        return this.mainParticle.getVelocity().add(forces.scalarMultiply(this.dt));
+        return orderedCollisions.stream().limit(OBSTACLE_LIMIT).collect(Collectors.toCollection(LIST_SUPPLIER));
     }
 
     /**
      * Computes the possible avoidance maneuvers given a list of sorted possible collisions
-     * @param mainParticle is the main particle that is being studied
      * @param particlesToCollide list of MutablePairs being the time in left and the particle index in right
      * @return a List of Vector2 with the force for each collision
      */
-    private List<Vector2D> computeAvoidanceManeuvers(Particle mainParticle, List<MutablePair<Double, Integer>> particlesToCollide) {
+    private List<Vector2D> computeAvoidanceManeuvers(List<MutablePair<Double, Integer>> particlesToCollide) {
         // List of avoidance maneuver forces
         List<Vector2D> forces = new ArrayList<>(particlesToCollide.size());
 
@@ -199,9 +192,9 @@ public class PredictiveCollisionAvoidance {
         // Iterate each possible collision
         for (MutablePair<Double, Integer> col : particlesToCollide){
             other = this.particles.get(col.right);
-            ci = mainParticle.getDesiredVelocity().scalarMultiply(col.left).add(mainParticle.getPosition());
-            cj = mainParticle.getVelocity().scalarMultiply(col.left).add(other.getPosition());
-            d = ci.subtract(mainParticle.getPosition()).getNorm() + (ci.subtract(cj).getNorm() - mainParticle.getRadius() - other.getRadius());
+            ci = this.mainParticle.getDesiredVelocity().scalarMultiply(col.left).add(this.mainParticle.getPosition());
+            cj = this.mainParticle.getVelocity().scalarMultiply(col.left).add(other.getPosition());
+            d = ci.subtract(this.mainParticle.getPosition()).getNorm() + (ci.subtract(cj).getNorm() - this.mainParticle.getRadius() - other.getRadius());
             // TODO: COMPUTE FORCE GIVEN D
         }
         return forces;
@@ -256,7 +249,8 @@ public class PredictiveCollisionAvoidance {
         return values;
     }
 
-    private void updateMainParticle(Vector2D avoidanceForce) {
+    private void updateMainParticle(Vector2D af, Vector2D wf, Vector2D gf) {
+        
         // TODO: UPDATE THE MAIN PARTICLE VELOCITY
     }
 
@@ -264,7 +258,6 @@ public class PredictiveCollisionAvoidance {
      * Updates the position of the obstacle particles, and if necessary, it reverses the velocity on wall collision
      */
     private void updateObstacleParticles() {
-        Vector2D newPosition, newVelocity;
         for (Particle p :this.particles.values()){
             if (p.getId() > 0){
                 // Update the positions

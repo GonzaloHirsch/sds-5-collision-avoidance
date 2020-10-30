@@ -2,6 +2,8 @@ package pca;
 
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 
+import java.util.Optional;
+
 public class Particle implements Comparable<Particle> {
     //////////////////////////////////////////////////////////////////////////////////////////
     //                                        PROPERTIES
@@ -203,11 +205,10 @@ public class Particle implements Comparable<Particle> {
     /**
      * Tells us if there will be a collision and if it is within the anticipated time
      * @param particle to analyze with current
-     * @param desiredVelocity of the current particle
      * @param anticipationTime collisions within this time will create an evasive force over the current particle
      * @return boolean
      */
-    public boolean collisionIsNear(Particle particle, Vector2D desiredVelocity, double anticipationTime) {
+    public Optional<Double> collisionIsNear(Particle particle, double anticipationTime) {
         // Current variables
         double xi  = this.getPosition().getX();
         double yi  = this.getPosition().getY();
@@ -217,37 +218,41 @@ public class Particle implements Comparable<Particle> {
         double yj  = particle.getPosition().getY();
 
         // Velocity variables
-        Vector2D v = desiredVelocity.subtract(particle.getVelocity());
+        Vector2D v = this.desiredVelocity.subtract(particle.getVelocity());
         double vx = v.getX();
         double vy = v.getY();
 
+        double xd = xj - xi;
+        double yd = yj - yi;
+
         // Quadratic variables
-        double c = xj*xj + xi*xi + yj*yj + yi*yi - 2*(xj*xi + yj*yi) - Math.pow(this.getComfortRadius() + particle.getRadius(), 2);
-        double b = 2*vx*(xi-xj) + 2*vy*(yi-yj);
+        double c = xd*xd + yd*yd - Math.pow(this.getComfortRadius() + particle.getRadius(), 2);
+        double b = -1 * (2*vx*xd + 2*vy*yd);
         double a = vx*vx + vy*vy;
-        double value = b * b - 4.0 * a * c;
+        double value = (b * b) - 4.0 * a * c;
 
         // No solution means no collision
         if (value < 0) {
-            return false;
+            return Optional.empty();
         }
 
         // Solutions
         double t1 = (-b + Math.sqrt(value)) / (2.0 * a);
-        double t2 = (-b + Math.sqrt(value)) / (2.0 * a);
+        double t2 = (-b - Math.sqrt(value)) / (2.0 * a);
 
         // One solution or both negative means no collision
         if (t1 == t2 || (t1 < 0.0 && t2 < 0.0)) {
-            return false;
+            return Optional.empty();
         } else if (t1 * t2 < 0) {
             // If one is negative and the other one positive,
             // then a collision is imminent
-            return true;
+            return Optional.of(0.0);
         } else {
-            // Both are positive
-            return Math.max(t1,t2) <= anticipationTime;
+            double min = Math.min(t1,t2);
+            if (min <= anticipationTime){
+                return Optional.of(min);
+            }
+            return Optional.empty();
         }
-
     }
-
 }
