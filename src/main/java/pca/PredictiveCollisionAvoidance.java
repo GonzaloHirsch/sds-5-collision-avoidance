@@ -1,6 +1,8 @@
 package pca;
 
+import app.Constants;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,8 +15,14 @@ public class PredictiveCollisionAvoidance {
     private final double dt;
     private double totalTime;
 
-    // Status variables
+    // Goal variables
     private boolean reachedGoal = false;
+    private final Vector2D goal;
+    private final double safeWallDistance;
+
+    // Area variables
+    private final double areaHeight;
+    private final double areaWidth;
 
     // Particle data
     private final Map<Integer, Particle> particles;
@@ -26,8 +34,16 @@ public class PredictiveCollisionAvoidance {
     // Constants
     // Limit to obstacle choosing, it takes the closest 3 particles in order to compute
     private static final int OBSTACLE_LIMIT = 3;
+    private static final int K_STEEPNESS = 1;
 
-    public PredictiveCollisionAvoidance(double dt2, double dt, List<Particle> particleList) {
+    private static final Vector2D[] NW = new Vector2D[]{
+            new Vector2D(0, -1),
+            new Vector2D(0, 1),
+            new Vector2D(1, 0),
+            new Vector2D(-1, 0)
+    };
+
+    public PredictiveCollisionAvoidance(double dt2, double dt, List<Particle> particleList, double areaHeight, double areaWidth, double safeWallDistance) {
         this.dt2 = dt2;
         this.dt = dt;
         this.totalTime = 0;
@@ -36,6 +52,15 @@ public class PredictiveCollisionAvoidance {
         this.particles = new HashMap<>(particleList.size());
         particleList.forEach(p -> this.particles.put(p.getId(), p));
         this.particleCount = particleList.size();
+
+        // Variables
+        this.safeWallDistance = safeWallDistance;
+        this.areaHeight = areaHeight;
+        this.areaWidth = areaWidth;
+        this.goal = new Vector2D(
+                areaWidth - this.particles.get(0).getComfortRadius(),
+                areaHeight - this.particles.get(0).getComfortRadius()
+        );
     }
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -82,6 +107,41 @@ public class PredictiveCollisionAvoidance {
     /////////////////////////////////////////////////////////////////////////////////////
     //                                 COMPUTATIONS
     /////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Computes the force applied to the particles by the walls in order
+     * to avoid collisions with them and remain at a safe distance.
+     *
+     * @param particle to analyze
+     * @return vector with the resulting force applied to the particle
+     */
+    private Vector2D computeWallAvoidanceForce(Particle particle) {
+
+        // Minimum distance to the walls
+        final double[] dw = new double[]{
+                this.areaHeight - particle.getPosition().getY(),
+                particle.getPosition().getY(),
+                particle.getPosition().getX(),
+                areaWidth - particle.getPosition().getX()
+        };
+
+        Vector2D totalForce = Vector2D.ZERO;
+
+        // Summing up the force each wall applies to the particle
+        for (int i = 0; i < Constants.WALLS; i++) {
+            Vector2D wallForce = (dw[i] - particle.getRadius() >= this.safeWallDistance)
+                    ? Vector2D.ZERO
+                    : NW[i].scalarMultiply(this.getWallForceScalar(particle, dw[i]));
+
+            totalForce.add(wallForce);
+        }
+
+        return totalForce;
+    }
+
+    private double getWallForceScalar(Particle particle, double dw) {
+        return (this.safeWallDistance + particle.getRadius() - dw) / Math.pow(dw - particle.getRadius(), K_STEEPNESS);
+    }
 
     private void computeInitialPositionPrediction() {
         // TODO: CALCULATE THE INITIAL PREDICTION FOR THE MAIN PARTICLE

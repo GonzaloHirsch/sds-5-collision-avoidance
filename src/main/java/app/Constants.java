@@ -1,5 +1,7 @@
 package app;
 
+import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
+
 public final class Constants {
     // Mass in kg
     public static final double SUN_MASS = 1988500 * Math.pow(10, 24);
@@ -9,7 +11,9 @@ public final class Constants {
     public static final double STATION_ORBITAL_VELOCITY = 7.12;
     public static final double STATION_ORBITAL_DISTANCE = 1500;
     public static final double SHIP_INITIAL_VELOCITY = 8;
-    public static final int SHIP_INDEX = 3;
+
+    public static final int WALLS = 4;
+
 
     // Universal Gravitation Constant
     public static final double G = 6.693 * Math.pow(10, -20);      // km^3/(kg * s^2)

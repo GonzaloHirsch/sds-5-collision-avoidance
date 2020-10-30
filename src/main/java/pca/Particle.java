@@ -12,6 +12,9 @@ public class Particle implements Comparable<Particle> {
     private final double radius;
     private final double mass;
     private final double comfortRadius;
+    private final double maxSpeed;
+    private final double preferredSpeed;
+    private final double pSpeedTime;
 
     /* Position + Velocity */
     private Vector2D position;
@@ -22,11 +25,14 @@ public class Particle implements Comparable<Particle> {
     //                                        CONSTRUCTORS
     //////////////////////////////////////////////////////////////////////////////////////////
 
-    public Particle(int id, double radius, double mass, double comfortRadius) {
+    public Particle(int id, double radius, double mass, double comfortRadius, double maxSpeed, double preferredSpeed, double pSpeedTime) {
         this.id = id;
         this.radius = radius;
         this.mass = mass;
         this.comfortRadius = comfortRadius;
+        this.maxSpeed = maxSpeed;
+        this.preferredSpeed = preferredSpeed;
+        this.pSpeedTime = pSpeedTime;
     }
 
 
@@ -125,5 +131,18 @@ public class Particle implements Comparable<Particle> {
      */
     public double getVelocityNorm() {
         return this.velocity.getNorm();
+    }
+
+    private Vector2D getGoalForce(Vector2D goal) {
+        return this.getNVector(goal)
+                .scalarMultiply(this.preferredSpeed)
+                .subtract(this.velocity)
+                .scalarMultiply(1/this.pSpeedTime);
+    }
+
+    private Vector2D getNVector(Vector2D goal) {
+        Vector2D N = goal.subtract(this.position);
+        N.normalize();
+        return N;
     }
 }
