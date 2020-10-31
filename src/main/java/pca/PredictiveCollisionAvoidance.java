@@ -35,7 +35,7 @@ public class PredictiveCollisionAvoidance {
     // Constants
     // Limit to obstacle choosing, it takes the closest 3 particles in order to compute
     private static final int OBSTACLE_LIMIT = 3;
-    private static final int K_STEEPNESS = 1;
+    private static final int K_STEEPNESS = 2;
     private static final int MAIN_PARTICLE_ID = 0;
     private static final Double[] BASE_WEIGHTS = new Double[]{0.8, 0.15, 0.05};
     private static final Vector2D[] NW = new Vector2D[]{
@@ -45,11 +45,11 @@ public class PredictiveCollisionAvoidance {
             new Vector2D(-1, 0)
     };
     private static final Supplier<List<MutablePair<Double, Integer>>> LIST_SUPPLIER = ArrayList::new;
-    private static final double D_MIN = 0.7;
+    private static final double D_MIN = 1.25;
     private static final double D_MID = 2 * D_MIN;
     private static final double D_MAX = (1 / D_MIN) + D_MID;
-    private static final double FD = (1 / D_MIN);
-    private static final double ANTICIPATION_TIME = 3;
+    private static final double FD = 20;
+    private static final double ANTICIPATION_TIME = 5;
 
     public PredictiveCollisionAvoidance(double dt2, double dt, Collection<Particle> particleList, double areaHeight, double areaWidth, double safeWallDistance) {
         this.dt2 = dt2;
@@ -60,16 +60,17 @@ public class PredictiveCollisionAvoidance {
         this.particles = new HashMap<>(particleList.size());
         particleList.forEach(p -> this.particles.put(p.getId(), p));
         this.particleCount = particleList.size();
+        this.mainParticle = this.particles.get(MAIN_PARTICLE_ID);
 
         // Variables
         this.safeWallDistance = safeWallDistance;
         this.areaHeight = areaHeight;
         this.areaWidth = areaWidth;
         this.goal = new Vector2D(
-                areaWidth - this.particles.get(0).getComfortRadius(),
-                areaHeight - this.particles.get(0).getComfortRadius()
+                areaWidth - this.mainParticle.getComfortRadius() - this.mainParticle.getRadius() / 2,
+                areaHeight - this.mainParticle.getComfortRadius() - this.mainParticle.getRadius() / 2
         );
-        this.mainParticle = this.particles.get(MAIN_PARTICLE_ID);
+
     }
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -82,7 +83,7 @@ public class PredictiveCollisionAvoidance {
         List<Vector2D> avoidanceManeuvers;
         int index = -1;
 
-        while (!this.reachedGoal && this.totalTime < 20) {
+        while (!this.reachedGoal && totalTime < 20) {
             // Checking if results can be stored
             index = this.checkAndStoreResults(index);
 
@@ -143,7 +144,7 @@ public class PredictiveCollisionAvoidance {
                     ? Vector2D.ZERO
                     : NW[i].scalarMultiply(this.getWallForceScalar(dw[i]));
 
-            totalForce.add(wallForce);
+            totalForce = totalForce.add(wallForce);
         }
 
         return totalForce;
@@ -292,7 +293,7 @@ public class PredictiveCollisionAvoidance {
 
         // Check if we are exceeding the max velocity
         if (this.mainParticle.getVelocityNorm() > this.mainParticle.getMaxSpeed()){
-            this.mainParticle.setVelocity(this.mainParticle.getVelocity().scalarMultiply(this.mainParticle.getMaxSpeed()));
+            this.mainParticle.setVelocity(this.mainParticle.getVelocity().normalize().scalarMultiply(this.mainParticle.getMaxSpeed()));
         }
 
         // Updating main particles positions
@@ -332,11 +333,11 @@ public class PredictiveCollisionAvoidance {
      */
     private double computeForceModule(double d) {
         if (d < D_MIN) {
-            return 1 / d;
+            return (1 / d) + FD;
         } else if (d < D_MID) {
             return FD;
         } else if (d < D_MAX) {
-            return (-1 * d) + D_MAX;
+            return (-1 * d) * (d / (D_MID - D_MAX)) + 3 * FD;
         } else {
             return 0;
         }

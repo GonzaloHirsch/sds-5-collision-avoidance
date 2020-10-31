@@ -8,7 +8,7 @@ OUTPUT_FILE = "./parsable_files/animation.xyz"
 COLOR_YELLOW = [235/255, 192/255, 52/255]
 COLOR_RED = [199/255, 59/255, 44/255]
 
-def generate_system_frames(filename, outfilename, radius, area_length):
+def generate_system_frames(filename, outfilename, radius, width, height):
     f = open(filename, 'r')
 
     # Extract data
@@ -52,10 +52,10 @@ def generate_system_frames(filename, outfilename, radius, area_length):
             point_index += 1
 
         # Adding dummy particles
-        f.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(0.00001, area_length, area_length, 0, 0, 0))
-        f.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(0.00001, -area_length, area_length, 0, 0, 0))
-        f.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(0.00001, area_length, -area_length, 0, 0, 0))
-        f.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(0.00001, -area_length, -area_length, 0, 0, 0))
+        f.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(0.00001, 0, 0, 0, 0, 0))
+        f.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(0.00001, 0, height, 0, 0, 0))
+        f.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(0.00001, width, height, 0, 0, 0))
+        f.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(0.00001, width, 0, 0, 0, 0))
 
     f.close()
 
@@ -68,13 +68,14 @@ def parse_particle_radius(filename):
 
     for line in f:
         data = line.rstrip("\n").split(" ")
-        if index > 0:
-            radius.append(data[1])
-        else:
-            length = float(data[0])
+        if index > 2:
+            radius.append(float(data[0]))
+        elif index == 0:
+            width = float(data[0])
+            height = float(data[1])
         index += 1
 
-    return radius, length
+    return radius, width, height
 
 
 # main() function
@@ -88,9 +89,9 @@ def main():
     # parser.add_argument('-t', dest='process_type', required=True)
     args = parser.parse_args()
 
-    particle_radius, area_length = parse_particle_radius(STATIC_FILE)
+    particle_radius, width, height = parse_particle_radius(STATIC_FILE)
 
-    generate_system_frames(INPUT_FILE, OUTPUT_FILE, particle_radius, area_length)
+    generate_system_frames(INPUT_FILE, OUTPUT_FILE, particle_radius, width, height)
 
 # call main
 if __name__ == '__main__':
