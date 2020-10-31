@@ -19,8 +19,15 @@ public class Main {
         // Parsing the options
         OptionsParser.ParseOptions(args);
 
-        // FIXME: PUT CORRECT PARTICLE LIST
-        PredictiveCollisionAvoidance pca = new PredictiveCollisionAvoidance(OptionsParser.dt, OptionsParser.dt2, null);
+        try {
+            // Parsing the initial configuration
+            ConfigurationParser.ParseConfiguration(OptionsParser.staticFile, OptionsParser.dynamicFile);
+        } catch (FileNotFoundException e) {
+            System.out.println("File not found");
+            System.exit(1);
+        }
+
+        PredictiveCollisionAvoidance pca = new PredictiveCollisionAvoidance(OptionsParser.dt, OptionsParser.dt2, ConfigurationParser.particles.values(), ConfigurationParser.height, ConfigurationParser.width, ConfigurationParser.safeWallDistance);
 
         // Running the simulation
         List<ImmutablePair<Double, double[][]>> results = pca.simulate();

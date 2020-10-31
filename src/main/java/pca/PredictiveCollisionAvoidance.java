@@ -13,7 +13,6 @@ public class PredictiveCollisionAvoidance {
     // Time variables
     private final double dt2;
     private final double dt;
-    private final double anticipationTime;
     private double totalTime;
 
     // Goal variables
@@ -50,8 +49,9 @@ public class PredictiveCollisionAvoidance {
     private static final double D_MID = 2 * D_MIN;
     private static final double D_MAX = (1 / D_MIN) + D_MID;
     private static final double FD = (1 / D_MIN);
+    private static final double ANTICIPATION_TIME = 3;
 
-    public PredictiveCollisionAvoidance(double dt2, double dt, List<Particle> particleList, double areaHeight, double areaWidth, double safeWallDistance) {
+    public PredictiveCollisionAvoidance(double dt2, double dt, Collection<Particle> particleList, double areaHeight, double areaWidth, double safeWallDistance) {
         this.dt2 = dt2;
         this.dt = dt;
         this.totalTime = 0;
@@ -70,7 +70,6 @@ public class PredictiveCollisionAvoidance {
                 areaHeight - this.particles.get(0).getComfortRadius()
         );
         this.mainParticle = this.particles.get(MAIN_PARTICLE_ID);
-        this.anticipationTime = 1.0; // FIXME! Pass as parameter
     }
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -83,7 +82,7 @@ public class PredictiveCollisionAvoidance {
         List<Vector2D> avoidanceManeuvers;
         int index = -1;
 
-        while (!this.reachedGoal) {
+        while (!this.reachedGoal && this.totalTime < 20) {
             // Checking if results can be stored
             index = this.checkAndStoreResults(index);
 
@@ -179,7 +178,7 @@ public class PredictiveCollisionAvoidance {
             p = this.particles.get(i);
 
             // Calculating collisions
-            col = this.mainParticle.collisionIsNear(p, this.anticipationTime);
+            col = this.mainParticle.collisionIsNear(p, ANTICIPATION_TIME);
 
             // If the collision is present, add the pair
             if (col.isPresent()) {
@@ -244,7 +243,7 @@ public class PredictiveCollisionAvoidance {
 
         // Compute the weighted sum
         for (int i = 0; i < maneuvers.size(); i++) {
-            totalForce.add(maneuvers.get(i).scalarMultiply(weights.get(i)));
+            totalForce = totalForce.add(maneuvers.get(i).scalarMultiply(weights.get(i)));
         }
 
         return totalForce;
@@ -290,6 +289,11 @@ public class PredictiveCollisionAvoidance {
         // Updating the main particles velocity
         Vector2D forces = af.add(wf).add(gf);
         this.mainParticle.updateVelocity(forces, this.dt);
+
+        // Check if we are exceeding the max velocity
+        if (this.mainParticle.getVelocityNorm() > this.mainParticle.getMaxSpeed()){
+            this.mainParticle.setVelocity(this.mainParticle.getVelocity().scalarMultiply(this.mainParticle.getMaxSpeed()));
+        }
 
         // Updating main particles positions
         this.mainParticle.updatePosition(this.dt);

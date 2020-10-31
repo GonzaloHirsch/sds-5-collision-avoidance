@@ -9,15 +9,16 @@ DYNAMIC_FILE = "./parsable_files/dynamic.txt"
 
 # Indexes
 R = 0
-X = 1
-Y = 2
-VX = 3
-VY = 4
+M = 1
+X = 2
+Y = 3
+VX = 4
+VY = 5
 
-def generate_people(width, height, people_count, people_radius, people_velocity, border_limit, main_radius, main_comfort_radius):
+def generate_people(width, height, people_count, people_radius, people_velocity, border_limit, main_radius, main_comfort_radius, mass):
     people_data = []
 
-    people_data.append([main_radius, main_comfort_radius, main_comfort_radius, 0, 0])
+    people_data.append([main_radius, mass, main_comfort_radius, main_comfort_radius, 0, 0])
 
     # Determine limits to be used for X and Y
     x_left, x_right = border_limit, width - border_limit
@@ -39,7 +40,7 @@ def generate_people(width, height, people_count, people_radius, people_velocity,
                 vel = -1 * people_velocity
             else:
                 vel = people_velocity
-            people_data.append([people_radius, target_x, target_y, 0, vel])
+            people_data.append([people_radius, mass, target_x, target_y, 0, vel])
             people_generated += 1
 
     return people_data
@@ -51,17 +52,20 @@ def is_overlapping(people_data, x, y, radius):
             return True
     return False
 
-def generate_static_file(filename, people_data, width, height):
+def generate_static_file(filename, people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed):
     f = open(filename, 'w')
 
     # Adding the width and height of area
     f.write('{} {}\n'.format(width, height))
 
-    # Adding the number of people
-    f.write('{}\n'.format(len(people_data)))
+    # Adding the comfort radius and the wall safe distance
+    f.write('{} {}\n'.format(comfort_radius, wall_distance))
+
+    # Adding speed info
+    f.write('{} {} {}\n'.format(pref_speed, pref_time, max_speed))
 
     for data in people_data:
-        f.write('{}\n'.format(data[R]))
+        f.write('{} {}\n'.format(data[R], data[M]))
 
     f.close()
 
@@ -78,8 +82,8 @@ def generate_dynamic_file(filename, people_data):
     f.close()
 
 # Generates both the dynamic and the static file
-def generate_files(people_data, width, height):
-    generate_static_file(STATIC_FILE, people_data, width, height)
+def generate_files(people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed):
+    generate_static_file(STATIC_FILE, people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed)
     generate_dynamic_file(DYNAMIC_FILE, people_data)
 
 # main() function
@@ -96,13 +100,35 @@ def main():
     parser.add_argument('-pr', dest='people_radius', required=True)
     parser.add_argument('-pv', dest='people_velocity', required=True)
     parser.add_argument('-cr', dest='comfort_radius', required=True)
+    parser.add_argument('-wr', dest='wall_radius', required=True)
     parser.add_argument('-r', dest='main_radius', required=True)
+    parser.add_argument('-m', dest='people_mass', required=True)
     parser.add_argument('-bl', dest='border_limit', required=True)
+    parser.add_argument('-ps', dest='pref_speed', required=True)
+    parser.add_argument('-pt', dest='pref_time', required=True)
+    parser.add_argument('-ms', dest='max_speed', required=True)
     args = parser.parse_args()
 
     print("Generating people information...")
-    people = generate_people(float(args.area_width), float(args.area_height), float(args.people_count), float(args.people_radius), float(args.people_velocity), float(args.border_limit), float(args.main_radius), float(args.comfort_radius))
-    generate_files(people, float(args.area_width), float(args.area_height))
+    people = generate_people(
+        float(args.area_width),
+        float(args.area_height),
+        float(args.people_count),
+        float(args.people_radius),
+        float(args.people_velocity),
+        float(args.border_limit),
+        float(args.main_radius),
+        float(args.comfort_radius),
+        float(args.people_mass))
+    generate_files(
+        people,
+        float(args.area_width),
+        float(args.area_height),
+        float(args.comfort_radius),
+        float(args.wall_radius),
+        float(args.pref_speed),
+        float(args.pref_time),
+        float(args.max_speed))
 
 # call main
 if __name__ == '__main__':
