@@ -16,10 +16,10 @@ PLOT_TIME_TRAVELLED = 'pt'
 PLOT_DISTANCE_TRAVELLED = 'pd'
 PLOT_MEAN_VELOCITY = 'pv'
 
-EVASIVE_PARTICLE_INDEX = 2 #FIXME!
+EVASIVE_PARTICLE_INDEX = 0
 X_VALUE = 0
 Y_VALUE = 1
-HEURISTIC_INDEX = 0 #TODO
+HEURISTIC_LINE = 1 #TODO
 ERROR = "Invalid type error"
 
 MEAN = 'mean'
@@ -63,9 +63,9 @@ def parse_heuristic(filename):
     heuristic = 0
 
     for line in f:
-        if index == HEURISTIC_INDEX:
+        if index == HEURISTIC_LINE:
             data = line.rstrip("\n").split(" ")
-            heuristic = data[0]
+            heuristic = float(data[0])
 
         index += 1
 
@@ -133,7 +133,7 @@ def calculate_mean_and_std(filename):
         data = line.rstrip("\n").split(" ")
 
         if len(data) == 1:
-            heuristic = int(data[0]) #TODO -> define
+            heuristic = float(data[0]) #TODO -> define
             if not heuristic in stats[TIME_TRAVELLED]:
                 stats[TIME_TRAVELLED][heuristic] = []
                 stats[DISTANCE_TRAVELLED][heuristic] = []

@@ -72,6 +72,19 @@ To run the simulation run:
 java -jar ./target/sds-tp5-1.0-jar-with-dependencies.jar -sf ./parsable_files/static.txt -df ./parsable_files/dynamic.txt -dt 0.001 -dt2 0.01
 ```
 
+## Statistics
+To run save the results of the run to stats.txt:
+```
+python3 post/postprocessing.py -s
+```
+To get the mean and standard deviation graphs for time travelled, distance travelled and mean velocity respectively:
+```
+python3 post/postprocessing.py -p pt 
+python3 post/postprocessing.py -p pd 
+python3 post/postprocessing.py -p pv 
+
+```
+
 ## Visualization
 To postprocess for visualization run:
 ```
