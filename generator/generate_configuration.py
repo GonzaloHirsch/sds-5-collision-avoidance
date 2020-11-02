@@ -32,7 +32,7 @@ def generate_people(width, height, people_count, people_radius, people_velocity,
         target_y = random.uniform(y_bottom, y_top)
 
         # Check if person is not overlapping others
-        if not is_overlapping(people_data, target_x, target_y, people_radius):
+        if not is_overlapping(people_data, target_x, target_y, people_radius, main_radius * 2):
             rnd_value = random.uniform(0, 1)
             if rnd_value > 0.5:
                 vel = -1 * people_velocity
@@ -43,9 +43,9 @@ def generate_people(width, height, people_count, people_radius, people_velocity,
 
     return people_data
 
-def is_overlapping(people_data, x, y, radius):
+def is_overlapping(people_data, x, y, radius, main_diameter):
     for p in people_data:
-        distance = math.sqrt((p[X] - x)**2) - p[R] - radius
+        distance = math.sqrt((p[X] - x)**2) - p[R] - radius - main_diameter
         if (distance <= 0):
             return True
     return False
