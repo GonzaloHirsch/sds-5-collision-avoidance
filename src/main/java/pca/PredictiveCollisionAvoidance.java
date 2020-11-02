@@ -45,15 +45,15 @@ public class PredictiveCollisionAvoidance {
             new Vector2D(-1, 0)
     };
     private static final Supplier<List<MutablePair<Double, Integer>>> LIST_SUPPLIER = ArrayList::new;
-    private static final double D_MIN = 1.25;
-    private static final double D_MID = 2 * D_MIN;
-    private static final double D_MAX = (1 / D_MIN) + D_MID;
-    private static final double FD = 20;
-    private static final double ANTICIPATION_TIME = 5;
+    private static final double ANTICIPATION_TIME = 4;
+    private final double D_MIN;
+    private final double D_MAX;
+    private final double D_MID = 4;
+    private static final double AS = 15;
 
-    public PredictiveCollisionAvoidance(double dt2, double dt, Collection<Particle> particleList, double areaHeight, double areaWidth, double safeWallDistance) {
-        this.dt2 = dt2;
+    public PredictiveCollisionAvoidance(double dt, double dt2, Collection<Particle> particleList, double areaHeight, double areaWidth, double safeWallDistance) {
         this.dt = dt;
+        this.dt2 = dt2;
         this.totalTime = 0;
 
         // Add all particles to map
@@ -62,13 +62,17 @@ public class PredictiveCollisionAvoidance {
         this.particleCount = particleList.size();
         this.mainParticle = this.particles.get(MAIN_PARTICLE_ID);
 
+        // Setting constants
+        D_MAX = this.particles.get(MAIN_PARTICLE_ID).getMaxSpeed() * ANTICIPATION_TIME;
+        D_MIN = this.particles.get(MAIN_PARTICLE_ID).getComfortRadius();
+
         // Variables
         this.safeWallDistance = safeWallDistance;
         this.areaHeight = areaHeight;
         this.areaWidth = areaWidth;
         this.goal = new Vector2D(
                 areaWidth - this.mainParticle.getComfortRadius() - this.mainParticle.getRadius() / 2,
-                areaHeight - this.mainParticle.getComfortRadius() - this.mainParticle.getRadius() / 2
+                areaHeight / 2
         );
 
     }
@@ -333,11 +337,11 @@ public class PredictiveCollisionAvoidance {
      */
     private double computeForceModule(double d) {
         if (d < D_MIN) {
-            return (1 / d) + FD;
+            return AS *  D_MIN / d;
         } else if (d < D_MID) {
-            return FD;
+            return AS;
         } else if (d < D_MAX) {
-            return (-1 * d) * (d / (D_MID - D_MAX)) + 3 * FD;
+            return AS * (D_MAX - d)/(D_MAX - D_MID);
         } else {
             return 0;
         }

@@ -18,19 +18,17 @@ VY = 5
 def generate_people(width, height, people_count, people_radius, people_velocity, border_limit, main_radius, main_comfort_radius, mass):
     people_data = []
 
-    people_data.append([main_radius, mass, main_comfort_radius, main_comfort_radius, 0, 0])
+    people_data.append([main_radius, mass, main_comfort_radius, height / 2, 0, 0])
 
     # Determine limits to be used for X and Y
     x_left, x_right = border_limit, width - border_limit
     # Generating possible x_positions
-    available_x_pos = [x for x in range(int(x_left), int(x_right))]
-    rnd.shuffle(available_x_pos)
     y_bottom, y_top = border_limit, height - border_limit
 
     people_generated = 0
     while (people_generated < people_count):
         # Generate X and Y values
-        target_x = available_x_pos[people_generated]
+        target_x = random.uniform(x_left, x_right)
         target_y = random.uniform(y_bottom, y_top)
 
         # Check if person is not overlapping others
@@ -47,7 +45,7 @@ def generate_people(width, height, people_count, people_radius, people_velocity,
 
 def is_overlapping(people_data, x, y, radius):
     for p in people_data:
-        distance = math.sqrt((p[X] - x)**2 + (p[Y] - Y)**2) - p[R] - radius
+        distance = math.sqrt((p[X] - x)**2) - p[R] - radius
         if (distance <= 0):
             return True
     return False
