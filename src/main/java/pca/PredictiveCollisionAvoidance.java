@@ -46,6 +46,7 @@ public class PredictiveCollisionAvoidance {
     };
     private static final Supplier<List<MutablePair<Double, MutablePair<Double, Integer>>>> LIST_SUPPLIER = ArrayList::new;
     private static final double ANTICIPATION_TIME = 4;
+    private static final int FORCE_MULTIPLIER = 3;
     private final double D_MIN;
     private final double D_MAX;
     private final double D_MID = 4;
@@ -98,7 +99,7 @@ public class PredictiveCollisionAvoidance {
         List<Vector2D> avoidanceManeuvers;
         int index = -1;
 
-        while (!this.reachedGoal && totalTime < 20) {
+        while (!this.reachedGoal) {
             // Checking if results can be stored
             index = this.checkAndStoreResults(index);
 
@@ -349,13 +350,8 @@ public class PredictiveCollisionAvoidance {
      * @return magnitude of the force
      */
     private double computeForceModule(double d) {
-        // If the distance is negative, than the particles are
-        // overlapping and need a strong force to repel
-        if (d <= 0) {
-            d = 0.01;
-        }
         if (d < D_MIN) {
-            return AS *  D_MIN / d;
+            return AS * Math.exp(FORCE_MULTIPLIER * (D_MIN - d));
         } else if (d < D_MID) {
             return AS;
         } else if (d < D_MAX) {
