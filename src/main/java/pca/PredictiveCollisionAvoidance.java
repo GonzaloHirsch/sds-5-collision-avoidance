@@ -44,12 +44,23 @@ public class PredictiveCollisionAvoidance {
             new Vector2D(1, 0),
             new Vector2D(-1, 0)
     };
-    private static final Supplier<List<MutablePair<Double, Integer>>> LIST_SUPPLIER = ArrayList::new;
+    private static final Supplier<List<MutablePair<Double, MutablePair<Double, Integer>>>> LIST_SUPPLIER = ArrayList::new;
     private static final double ANTICIPATION_TIME = 4;
     private final double D_MIN;
     private final double D_MAX;
     private final double D_MID = 4;
     private static final double AS = 15;
+    private static final Comparator<MutablePair<Double, MutablePair<Double, Integer>>> TREESET_COMPARATOR = (o1, o2) -> {
+        int first = o1.left.compareTo(o2.left);
+        if (first != 0){
+            return first;
+        }
+        int second = o1.right.left.compareTo(o2.right.left);
+        if (second != 0){
+            return second;
+        }
+        return o1.right.right.compareTo(o2.right.right);
+    };
 
     public PredictiveCollisionAvoidance(double dt, double dt2, Collection<Particle> particleList, double areaHeight, double areaWidth, double safeWallDistance) {
         this.dt = dt;
@@ -82,7 +93,7 @@ public class PredictiveCollisionAvoidance {
     /////////////////////////////////////////////////////////////////////////////////////
 
     public List<ImmutablePair<Double, double[][]>> simulate() {
-        List<MutablePair<Double, Integer>> closestCollisions;
+        List<MutablePair<Double, MutablePair<Double, Integer>>> closestCollisions;
         Vector2D avoidanceForce, wallForce, goalForce;
         List<Vector2D> avoidanceManeuvers;
         int index = -1;
@@ -169,9 +180,9 @@ public class PredictiveCollisionAvoidance {
      * @param gf Goal driving force
      * @return List of pairs containing the time to collide and the particle involved
      */
-    private List<MutablePair<Double, Integer>> computeClosestParticles(Vector2D wf, Vector2D gf) {
+    private List<MutablePair<Double, MutablePair<Double, Integer>>> computeClosestParticles(Vector2D wf, Vector2D gf) {
         // TreeSet for ordered results
-        TreeSet<MutablePair<Double, Integer>> orderedCollisions = new TreeSet<>(Comparator.comparing(o -> o.left));
+        TreeSet<MutablePair<Double, MutablePair<Double, Integer>>> orderedCollisions = new TreeSet<>(TREESET_COMPARATOR);
 
         // Computing and storing the desired velocity
         Vector2D desiredVelocity = this.mainParticle.getVelocity().add(wf.add(gf).scalarMultiply(this.dt));
@@ -179,6 +190,7 @@ public class PredictiveCollisionAvoidance {
 
         Particle p;
         Optional<Double> col;
+        double distance;
         for (int i = 1; i < this.particleCount; i++) {
             p = this.particles.get(i);
 
@@ -187,7 +199,8 @@ public class PredictiveCollisionAvoidance {
 
             // If the collision is present, add the pair
             if (col.isPresent()) {
-                orderedCollisions.add(new MutablePair<>(col.get(), i));
+                distance = p.getPosition().subtract(this.mainParticle.getPosition()).getNorm();
+                orderedCollisions.add(new MutablePair<>(col.get(), new MutablePair<>(distance, i)));
             }
         }
 
@@ -200,7 +213,7 @@ public class PredictiveCollisionAvoidance {
      * @param particlesToCollide list of MutablePairs being the time in left and the particle index in right
      * @return a List of Vector2 with the force for each collision
      */
-    private List<Vector2D> computeAvoidanceManeuvers(List<MutablePair<Double, Integer>> particlesToCollide) {
+    private List<Vector2D> computeAvoidanceManeuvers(List<MutablePair<Double, MutablePair<Double, Integer>>> particlesToCollide) {
         // List of avoidance maneuver forces
         List<Vector2D> forces = new ArrayList<>(particlesToCollide.size());
 
@@ -214,12 +227,12 @@ public class PredictiveCollisionAvoidance {
         double d, fd;
 
         // Iterate each possible collision
-        for (MutablePair<Double, Integer> col : particlesToCollide) {
-            other = this.particles.get(col.right);
+        for (MutablePair<Double, MutablePair<Double, Integer>> col : particlesToCollide) {
+            other = this.particles.get(col.right.right);
 
             // Calculating future positions
             ci = this.mainParticle.getDesiredVelocity().scalarMultiply(col.left).add(this.mainParticle.getPosition());
-            cj = this.mainParticle.getVelocity().scalarMultiply(col.left).add(other.getPosition());
+            cj = other.getVelocity().scalarMultiply(col.left).add(other.getPosition());
 
             // Calculating D parameter
             d = ci.subtract(this.mainParticle.getPosition()).getNorm() + (ci.subtract(cj).getNorm() - this.mainParticle.getRadius() - other.getRadius());
