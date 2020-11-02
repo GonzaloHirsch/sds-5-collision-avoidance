@@ -36,7 +36,6 @@ public class PredictiveCollisionAvoidance {
     // Limit to obstacle choosing, it takes the closest 3 particles in order to compute
     private static final int OBSTACLE_LIMIT = 3;
     private static final int K_STEEPNESS = 2;
-    private static final double MAX_EVASIVE_FORCE = 100000.0;
     private static final int MAIN_PARTICLE_ID = 0;
     private static final Double[] BASE_WEIGHTS = new Double[]{0.8, 0.15, 0.05};
     private static final Vector2D[] NW = new Vector2D[]{
@@ -240,11 +239,9 @@ public class PredictiveCollisionAvoidance {
 
             // Calculating the force module
             fd = this.computeForceModule(d);
-
-            Vector2D direction = d >= 0 ? ci.subtract(cj) : cj.subtract(ci);
-
+            
             // Adding the force to the list, using the direction
-            forces.add(direction.normalize().scalarMultiply(fd));
+            forces.add(ci.subtract(cj).normalize().scalarMultiply(fd));
         }
         return forces;
     }
@@ -352,14 +349,17 @@ public class PredictiveCollisionAvoidance {
      * @return magnitude of the force
      */
     private double computeForceModule(double d) {
+        // If the distance is negative, than the particles are
+        // overlapping and need a strong force to repel
+        if (d <= 0) {
+            d = 0.01;
+        }
         if (d < D_MIN) {
             return AS *  D_MIN / d;
         } else if (d < D_MID) {
             return AS;
         } else if (d < D_MAX) {
             return AS * (D_MAX - d)/(D_MAX - D_MID);
-        } else if (d < 0) {
-            return MAX_EVASIVE_FORCE;
         } else {
             return 0;
         }
