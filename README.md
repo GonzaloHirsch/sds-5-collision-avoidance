@@ -59,7 +59,7 @@ obstacle_n_x obstacle_n_y obstacle_n_vx obstacle_n_vy
 ## Generation
 To generate dynamic input, a python script is used:
 ```
-python3 generator/generate_configuration.py -W 18 -H 9 -p 10 -pr 0.5 -pv 1.3 -cr 0.9 -r 0.5 -bl 2 -m 70 -wr 0.6 -ps 1.3 -pt 0.5 -ms 2
+python3 generator/generate_configuration.py -W 18 -H 9 -p 10 -pr 0.5 -pv 1.3 -cr 0.9 -r 0.5 -bl 2 -m 70 -wr 0.6 -ps 1.3 -pt 0.5 -ms 2 -at 4
 ```
 
 This will generate an area of 14x7 (width x height) with 10 people obstacles of 0.15m radius with Y velocity of 3.

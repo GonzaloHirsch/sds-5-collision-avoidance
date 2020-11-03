@@ -17,6 +17,7 @@ public class Particle implements Comparable<Particle> {
     private final double maxSpeed;
     private final double preferredSpeed;
     private final double pSpeedTime;
+    private final double anticipationTime;
 
     /* Position + Velocity */
     private Vector2D position;
@@ -28,7 +29,7 @@ public class Particle implements Comparable<Particle> {
     //                                        CONSTRUCTORS
     //////////////////////////////////////////////////////////////////////////////////////////
 
-    public Particle(int id, double radius, double mass, double comfortRadius, double maxSpeed, double preferredSpeed, double pSpeedTime) {
+    public Particle(int id, double radius, double mass, double comfortRadius, double maxSpeed, double preferredSpeed, double pSpeedTime, double anticipationTime) {
         this.id = id;
         this.radius = radius;
         this.mass = mass;
@@ -36,6 +37,7 @@ public class Particle implements Comparable<Particle> {
         this.maxSpeed = maxSpeed;
         this.preferredSpeed = preferredSpeed;
         this.pSpeedTime = pSpeedTime;
+        this.anticipationTime = anticipationTime;
     }
 
 
@@ -77,6 +79,10 @@ public class Particle implements Comparable<Particle> {
 
     public double getMaxSpeed() {
         return maxSpeed;
+    }
+
+    public double getAnticipationTime() {
+        return anticipationTime;
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -211,10 +217,9 @@ public class Particle implements Comparable<Particle> {
     /**
      * Tells us if there will be a collision and if it is within the anticipated time
      * @param particle to analyze with current
-     * @param anticipationTime collisions within this time will create an evasive force over the current particle
      * @return boolean
      */
-    public Optional<Double> collisionIsNear(Particle particle, double anticipationTime) {
+    public Optional<Double> collisionIsNear(Particle particle) {
         // Current variables
         double xi  = this.getPosition().getX();
         double yi  = this.getPosition().getY();
@@ -255,7 +260,7 @@ public class Particle implements Comparable<Particle> {
             return Optional.of(0.0);
         } else {
             double min = Math.min(t1,t2);
-            if (min <= anticipationTime){
+            if (min <= this.anticipationTime){
                 return Optional.of(min);
             }
             return Optional.empty();

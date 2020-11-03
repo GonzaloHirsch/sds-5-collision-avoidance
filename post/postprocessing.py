@@ -19,7 +19,8 @@ PLOT_MEAN_VELOCITY = 'pv'
 EVASIVE_PARTICLE_INDEX = 0
 X_VALUE = 0
 Y_VALUE = 1
-HEURISTIC_LINE = 1 #TODO
+HEURISTIC_LINE = 2
+HEURISTIC_INDEX = 3
 ERROR = "Invalid type error"
 
 MEAN = 'mean'
@@ -65,7 +66,7 @@ def parse_heuristic(filename):
     for line in f:
         if index == HEURISTIC_LINE:
             data = line.rstrip("\n").split(" ")
-            heuristic = float(data[0])
+            heuristic = float(data[HEURISTIC_INDEX])
 
         index += 1
 
@@ -173,7 +174,8 @@ def organize_data_type(data):
 def plot_graph(x_values, means, std, type):
 
     # Set the x axis label
-    plt.xlabel('Heuristica')
+    # TODO: Ver si es tiempo de anticipacion o DMAX
+    plt.xlabel('Tiempo de Anticipación [s]')
 
     switcher = {
         TIME_TRAVELLED: "Tiempo transcurrido [s]",

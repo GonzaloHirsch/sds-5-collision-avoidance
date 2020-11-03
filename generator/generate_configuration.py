@@ -50,7 +50,7 @@ def is_overlapping(people_data, x, y, radius, main_diameter):
             return True
     return False
 
-def generate_static_file(filename, people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed):
+def generate_static_file(filename, people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed, anticipation_time):
     f = open(filename, 'w')
 
     # Adding the width and height of area
@@ -60,7 +60,7 @@ def generate_static_file(filename, people_data, width, height, comfort_radius, w
     f.write('{} {}\n'.format(comfort_radius, wall_distance))
 
     # Adding speed info
-    f.write('{} {} {}\n'.format(pref_speed, pref_time, max_speed))
+    f.write('{} {} {} {}\n'.format(pref_speed, pref_time, max_speed, anticipation_time))
 
     for data in people_data:
         f.write('{} {}\n'.format(data[R], data[M]))
@@ -80,8 +80,8 @@ def generate_dynamic_file(filename, people_data):
     f.close()
 
 # Generates both the dynamic and the static file
-def generate_files(people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed):
-    generate_static_file(STATIC_FILE, people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed)
+def generate_files(people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed, anticipation_time):
+    generate_static_file(STATIC_FILE, people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed, anticipation_time)
     generate_dynamic_file(DYNAMIC_FILE, people_data)
 
 # main() function
@@ -105,9 +105,9 @@ def main():
     parser.add_argument('-ps', dest='pref_speed', required=True)
     parser.add_argument('-pt', dest='pref_time', required=True)
     parser.add_argument('-ms', dest='max_speed', required=True)
+    parser.add_argument('-at', dest='anticipation_time', required=True)
     args = parser.parse_args()
 
-    print("Generating people information...")
     people = generate_people(
         float(args.area_width),
         float(args.area_height),
@@ -126,7 +126,8 @@ def main():
         float(args.wall_radius),
         float(args.pref_speed),
         float(args.pref_time),
-        float(args.max_speed))
+        float(args.max_speed),
+        float(args.anticipation_time))
 
 # call main
 if __name__ == '__main__':

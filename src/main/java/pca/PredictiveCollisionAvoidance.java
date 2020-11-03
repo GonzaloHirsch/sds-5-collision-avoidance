@@ -62,6 +62,7 @@ public class PredictiveCollisionAvoidance {
         }
         return o1.right.right.compareTo(o2.right.right);
     };
+    private static final int TIME_LIMIT = 150;
 
     public PredictiveCollisionAvoidance(double dt, double dt2, Collection<Particle> particleList, double areaHeight, double areaWidth, double safeWallDistance) {
         this.dt = dt;
@@ -75,7 +76,7 @@ public class PredictiveCollisionAvoidance {
         this.mainParticle = this.particles.get(MAIN_PARTICLE_ID);
 
         // Setting constants
-        D_MAX = this.particles.get(MAIN_PARTICLE_ID).getMaxSpeed() * ANTICIPATION_TIME;
+        D_MAX = this.particles.get(MAIN_PARTICLE_ID).getMaxSpeed() * this.particles.get(MAIN_PARTICLE_ID).getAnticipationTime();
         D_MIN = this.particles.get(MAIN_PARTICLE_ID).getComfortRadius();
 
         // Variables
@@ -99,7 +100,7 @@ public class PredictiveCollisionAvoidance {
         List<Vector2D> avoidanceManeuvers;
         int index = -1;
 
-        while (!this.reachedGoal) {
+        while (!this.reachedGoal && this.totalTime < TIME_LIMIT) {
             // Checking if results can be stored
             index = this.checkAndStoreResults(index);
 
@@ -127,6 +128,12 @@ public class PredictiveCollisionAvoidance {
 
             // Updating the time
             this.totalTime += this.dt;
+        }
+
+        // In case the program is stuck, forcing it to stop
+        if (this.totalTime < TIME_LIMIT){
+            System.out.println("Forced stopped the program, time limit reached");
+            System.exit(1);
         }
 
         return this.results;
@@ -196,7 +203,7 @@ public class PredictiveCollisionAvoidance {
             p = this.particles.get(i);
 
             // Calculating collisions
-            col = this.mainParticle.collisionIsNear(p, ANTICIPATION_TIME);
+            col = this.mainParticle.collisionIsNear(p);
 
             // If the collision is present, add the pair
             if (col.isPresent()) {
