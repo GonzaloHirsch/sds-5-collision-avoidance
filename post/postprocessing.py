@@ -12,15 +12,19 @@ STATIC_FILE = "./parsable_files/static.txt"
 TIME_TRAVELLED = 't'
 DISTANCE_TRAVELLED = 'd'
 MEAN_VELOCITY = 'v'
+COLLISION_NUMBER = 'c'
 PLOT_TIME_TRAVELLED = 'pt'
 PLOT_DISTANCE_TRAVELLED = 'pd'
 PLOT_MEAN_VELOCITY = 'pv'
+PLOT_COLLISION_NUMBER = 'pc'
 
 EVASIVE_PARTICLE_INDEX = 0
 X_VALUE = 0
 Y_VALUE = 1
 HEURISTIC_LINE = 2
 HEURISTIC_INDEX = 3
+RADIUS_LINE = 3
+RADIUS_INDEX = 0
 ERROR = "Invalid type error"
 
 MEAN = 'mean'
@@ -74,6 +78,21 @@ def parse_heuristic(filename):
 
     return heuristic
 
+def parse_radius(filename):
+    f = open(filename, 'r')
+
+    index = 0
+    radius = {}
+
+    for line in f:
+        if index >= RADIUS_LINE:
+            data = line.rstrip("\n").split(" ")
+            radius[index - RADIUS_LINE] = float(data[RADIUS_INDEX])
+        index += 1
+
+    f.close()
+
+    return radius
 
 def distance_travelled(positions):
 
@@ -106,14 +125,42 @@ def mean_velocity(times, distance):
     print("The mean velocity of the particle was " + str(average_velocity))
     return average_velocity
 
+def number_of_collisions(times, positions, radius):
+    count = 0
 
-def save_results(p, time, distance, velocity):
+    # Preparing collisions map
+    collisions = {}
+    for i in range(len(radius)):
+        collisions[i] = 0
+
+    for i in range(len(times)):
+        # Current position of main particle
+        curr = positions[0][i]
+        for j in range(1, len(radius)):
+            has_col = check_if_colliding(curr, positions[j][i], radius[0], radius[j])
+            if has_col:
+                if collisions[j] == 0:
+                    count += 1
+                collisions[j] += 1
+            else:
+                collisions[j] = 0
+
+    print("The number of collisions of the particle was " + str(count))
+    return count
+
+def check_if_colliding(a_pos, b_pos, a_radius, b_radius):
+    dist = math.sqrt((a_pos[0] - b_pos[0])**2 + (a_pos[1] - b_pos[1])**2) - a_radius - b_radius
+    if dist <= 0:
+        return True
+    return False
+
+def save_results(p, time, distance, velocity, collisions):
     wf = open(STATS_FILE, 'a')
     wf.write('{}\n'.format(p))
     wf.write('{} {}\n'.format(TIME_TRAVELLED, time))
     wf.write('{} {}\n'.format(DISTANCE_TRAVELLED, distance))
     wf.write('{} {}\n'.format(MEAN_VELOCITY, velocity))
-
+    wf.write('{} {}\n'.format(COLLISION_NUMBER, collisions))
 
 def calculate_mean(values):
     return statistics.mean(values)
@@ -126,7 +173,7 @@ def calculate_stdev(values, mean):
 
 
 def calculate_mean_and_std(filename):
-    stats = {TIME_TRAVELLED: {}, DISTANCE_TRAVELLED: {}, MEAN_VELOCITY: {}}
+    stats = {TIME_TRAVELLED: {}, DISTANCE_TRAVELLED: {}, MEAN_VELOCITY: {}, COLLISION_NUMBER: {}}
     heuristic = 0
 
     f = open(filename, "r")
@@ -139,6 +186,7 @@ def calculate_mean_and_std(filename):
                 stats[TIME_TRAVELLED][heuristic] = []
                 stats[DISTANCE_TRAVELLED][heuristic] = []
                 stats[MEAN_VELOCITY][heuristic] = []
+                stats[COLLISION_NUMBER][heuristic] = []
         else:
             # Retrieving the values
             type = data[0]
@@ -181,6 +229,7 @@ def plot_graph(x_values, means, std, type):
         TIME_TRAVELLED: "Tiempo transcurrido [s]",
         DISTANCE_TRAVELLED: "Distancia recorrida [m]",
         MEAN_VELOCITY: "Velocidad promedia [m/s]",
+        COLLISION_NUMBER: "Cantidad de colisiones"
     }
     y_label = switcher.get(type, ERROR)
 
@@ -210,15 +259,17 @@ def main():
     if args.s:
         # Result extraction
         p = parse_heuristic(STATIC_FILE)
+        radius = parse_radius(STATIC_FILE)
         times, positions, velocities = extract_results(INPUT_FILE)
 
         # Metrics calculations
         time_travel = elapsed_time(times)
         distance_travel = distance_travelled(positions)
         average_velocity = mean_velocity(times, distance_travel)
+        collisions = number_of_collisions(times, positions, radius)
 
         #Saving metrics
-        save_results(p, time_travel, distance_travel, average_velocity)
+        save_results(p, time_travel, distance_travel, average_velocity, collisions)
 
     if args.plot_type:
         if args.plot_type == PLOT_TIME_TRAVELLED:
@@ -235,6 +286,11 @@ def main():
             stats = calculate_mean_and_std(STATS_FILE)
             p, velocities, stdevs = organize_data_type(stats[MEAN_VELOCITY])
             plot_graph(p, velocities, stdevs, MEAN_VELOCITY)
+
+        elif args.plot_type == PLOT_COLLISION_NUMBER:
+            stats = calculate_mean_and_std(STATS_FILE)
+            p, velocities, stdevs = organize_data_type(stats[COLLISION_NUMBER])
+            plot_graph(p, velocities, stdevs, COLLISION_NUMBER)
 
 
 # call main

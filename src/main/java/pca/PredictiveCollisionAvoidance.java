@@ -131,7 +131,7 @@ public class PredictiveCollisionAvoidance {
         }
 
         // In case the program is stuck, forcing it to stop
-        if (this.totalTime < TIME_LIMIT){
+        if (this.totalTime >= TIME_LIMIT){
             System.out.println("Forced stopped the program, time limit reached");
             System.exit(1);
         }

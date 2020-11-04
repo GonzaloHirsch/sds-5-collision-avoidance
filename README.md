@@ -81,8 +81,8 @@ To get the mean and standard deviation graphs for time travelled, distance trave
 ```
 python3 post/postprocessing.py -p pt 
 python3 post/postprocessing.py -p pd 
-python3 post/postprocessing.py -p pv 
-
+python3 post/postprocessing.py -p pv
+python3 post/postprocessing.py -p pc
 ```
 
 ## Visualization
