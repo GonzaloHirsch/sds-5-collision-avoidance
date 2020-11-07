@@ -47,9 +47,9 @@ public class PredictiveCollisionAvoidance {
     private static final Supplier<List<MutablePair<Double, MutablePair<Double, Integer>>>> LIST_SUPPLIER = ArrayList::new;
     private static final double ANTICIPATION_TIME = 4;
     private static final int FORCE_MULTIPLIER = 3;
-    private final double D_MIN;
-    private final double D_MAX;
-    private final double D_MID = 4;
+    private final double D_MIN = 0.9;
+    private final double D_MAX = 4;
+    private final double D_MID = 2;
     private static final double AS = 15;
     private static final Comparator<MutablePair<Double, MutablePair<Double, Integer>>> TREESET_COMPARATOR = (o1, o2) -> {
         int first = o1.left.compareTo(o2.left);
@@ -76,8 +76,8 @@ public class PredictiveCollisionAvoidance {
         this.mainParticle = this.particles.get(MAIN_PARTICLE_ID);
 
         // Setting constants
-        D_MAX = this.particles.get(MAIN_PARTICLE_ID).getMaxSpeed() * this.particles.get(MAIN_PARTICLE_ID).getAnticipationTime();
-        D_MIN = this.particles.get(MAIN_PARTICLE_ID).getComfortRadius();
+//        D_MAX = this.particles.get(MAIN_PARTICLE_ID).getMaxSpeed() * this.particles.get(MAIN_PARTICLE_ID).getAnticipationTime();
+//        D_MIN = this.particles.get(MAIN_PARTICLE_ID).getComfortRadius();
 
         // Variables
         this.safeWallDistance = safeWallDistance;

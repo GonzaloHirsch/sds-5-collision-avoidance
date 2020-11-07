@@ -1,10 +1,10 @@
 #!/bin/bash
 
-time_base=2.5
+time_base=0
 time_mult=0.25
 
 #!/bin/bash
-for i in {0..10}
+for i in {0..12}
 do
   time_limit=$(echo "$i * $time_mult + $time_base" | bc)
   echo "Time limit $time_limit"

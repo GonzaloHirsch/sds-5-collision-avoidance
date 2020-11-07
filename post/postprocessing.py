@@ -4,6 +4,8 @@ import argparse
 import random as rnd
 import statistics
 import matplotlib.pyplot as plt
+from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
+                               AutoMinorLocator)
 
 INPUT_FILE = "./parsable_files/output.txt"
 STATS_FILE = "./parsable_files/stats.txt"
@@ -240,7 +242,7 @@ def plot_graph(x_values, means, std, type):
     plt.ylabel(y_label)
 
     plt.errorbar(x_values, means, yerr=std, fmt='o', color='black', ecolor='lightgray', elinewidth=3, capsize=0)
-
+    plt.gca().xaxis.set_minor_locator(MultipleLocator(0.25))
     plt.show()
 
 
