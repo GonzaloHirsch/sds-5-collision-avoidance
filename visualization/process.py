@@ -30,7 +30,7 @@ def generate_system_frames(filename, outfilename, radius, width, height):
 
     f = open(outfilename, 'w')
 
-    n = len(processed_data[times[0]]) + 4
+    n = len(processed_data[times[0]]) + 5
 
     for time in times:
         f.write('{}\n'.format(n))
@@ -56,6 +56,7 @@ def generate_system_frames(filename, outfilename, radius, width, height):
         f.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(0.00001, 0, height, 0, 0, 0))
         f.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(0.00001, width, height, 0, 0, 0))
         f.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(0.00001, width, 0, 0, 0, 0))
+        f.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(0.3, 34.65, 4.5, 0, 0, 1))
 
     f.close()
 

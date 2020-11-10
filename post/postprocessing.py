@@ -225,7 +225,7 @@ def plot_graph(x_values, means, std, type):
 
     # Set the x axis label
     # TODO: Ver si es tiempo de anticipacion o DMAX
-    plt.xlabel('Tiempo de Anticipación [s]')
+    plt.xlabel('D_MIN [m]')
 
     switcher = {
         TIME_TRAVELLED: "Tiempo transcurrido [s]",

@@ -21,7 +21,7 @@ def generate_people(width, height, people_count, people_radius, people_velocity,
     people_data.append([main_radius, mass, main_comfort_radius, height / 2, 0, 0])
 
     # Determine limits to be used for X and Y
-    x_left, x_right = border_limit, width - border_limit
+    x_left, x_right = border_limit, width - 2 * border_limit
     # Generating possible x_positions
     y_bottom, y_top = border_limit, height - border_limit
 
@@ -32,7 +32,7 @@ def generate_people(width, height, people_count, people_radius, people_velocity,
         target_y = random.uniform(y_bottom, y_top)
 
         # Check if person is not overlapping others
-        if not is_overlapping(people_data, target_x, target_y, people_radius, main_radius * 2):
+        if not is_overlapping(people_data, target_x, target_y, people_radius, main_radius):
             rnd_value = random.uniform(0, 1)
             if rnd_value > 0.5:
                 vel = -1 * people_velocity
@@ -50,7 +50,7 @@ def is_overlapping(people_data, x, y, radius, main_diameter):
             return True
     return False
 
-def generate_static_file(filename, people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed, anticipation_time):
+def generate_static_file(filename, people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed, dmin):
     f = open(filename, 'w')
 
     # Adding the width and height of area
@@ -60,7 +60,7 @@ def generate_static_file(filename, people_data, width, height, comfort_radius, w
     f.write('{} {}\n'.format(comfort_radius, wall_distance))
 
     # Adding speed info
-    f.write('{} {} {} {}\n'.format(pref_speed, pref_time, max_speed, anticipation_time))
+    f.write('{} {} {} {}\n'.format(pref_speed, pref_time, max_speed, dmin))
 
     for data in people_data:
         f.write('{} {}\n'.format(data[R], data[M]))
@@ -80,8 +80,8 @@ def generate_dynamic_file(filename, people_data):
     f.close()
 
 # Generates both the dynamic and the static file
-def generate_files(people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed, anticipation_time):
-    generate_static_file(STATIC_FILE, people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed, anticipation_time)
+def generate_files(people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed, dmin):
+    generate_static_file(STATIC_FILE, people_data, width, height, comfort_radius, wall_distance, pref_speed, pref_time, max_speed, dmin)
     generate_dynamic_file(DYNAMIC_FILE, people_data)
 
 # main() function
@@ -105,7 +105,7 @@ def main():
     parser.add_argument('-ps', dest='pref_speed', required=True)
     parser.add_argument('-pt', dest='pref_time', required=True)
     parser.add_argument('-ms', dest='max_speed', required=True)
-    parser.add_argument('-at', dest='anticipation_time', required=True)
+    parser.add_argument('-dmin', dest='dmin', required=True)
     args = parser.parse_args()
 
     people = generate_people(
@@ -127,7 +127,7 @@ def main():
         float(args.pref_speed),
         float(args.pref_time),
         float(args.max_speed),
-        float(args.anticipation_time))
+        float(args.dmin))
 
 # call main
 if __name__ == '__main__':

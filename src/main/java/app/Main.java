@@ -27,7 +27,7 @@ public class Main {
             System.exit(1);
         }
 
-        PredictiveCollisionAvoidance pca = new PredictiveCollisionAvoidance(OptionsParser.dt, OptionsParser.dt2, ConfigurationParser.particles.values(), ConfigurationParser.height, ConfigurationParser.width, ConfigurationParser.safeWallDistance);
+        PredictiveCollisionAvoidance pca = new PredictiveCollisionAvoidance(OptionsParser.dt, OptionsParser.dt2, ConfigurationParser.particles.values(), ConfigurationParser.height, ConfigurationParser.width, ConfigurationParser.safeWallDistance, ConfigurationParser.dmin);
 
         // Running the simulation
         List<ImmutablePair<Double, double[][]>> results = pca.simulate();

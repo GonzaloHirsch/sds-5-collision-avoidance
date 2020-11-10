@@ -17,7 +17,9 @@ public class ConfigurationParser {
     public static double prefSpeed;
     public static double prefTime;
     public static double maxSpeed;
-    public static double anticipationTime;
+    public static double dmin;
+
+    private static final double ANTICIPATION_TIME = 4;
 
     /**
      * Parses the files given with the static and dynamic information in order to configure the initial state of GOL
@@ -43,7 +45,7 @@ public class ConfigurationParser {
         prefSpeed = sc.nextDouble();
         prefTime = sc.nextDouble();
         maxSpeed = sc.nextDouble();
-        anticipationTime = sc.nextDouble();
+        dmin = sc.nextDouble();
 
         int particleCount = 0;
 
@@ -53,7 +55,7 @@ public class ConfigurationParser {
             double mass = sc.nextDouble();
 
             // Generating the new particle
-            Particle p = new Particle(particleCount, radius, mass, comfortRadius, maxSpeed, prefSpeed, prefTime, anticipationTime);
+            Particle p = new Particle(particleCount, radius, mass, comfortRadius, maxSpeed, prefSpeed, prefTime, ANTICIPATION_TIME);
             particles.put(particleCount, p);
 
             particleCount++;
