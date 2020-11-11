@@ -53,10 +53,6 @@ public class Particle implements Comparable<Particle> {
         return radius;
     }
 
-    public double getMass() {
-        return mass;
-    }
-
     public double getComfortRadius() {
         return comfortRadius;
     }
@@ -81,10 +77,6 @@ public class Particle implements Comparable<Particle> {
         return maxSpeed;
     }
 
-    public double getAnticipationTime() {
-        return anticipationTime;
-    }
-
     //////////////////////////////////////////////////////////////////////////////////////////
     //                                        SETTERS
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -97,24 +89,12 @@ public class Particle implements Comparable<Particle> {
         this.position = v;
     }
 
-    public void setNextPosition(final double x, final double y) {
-        this.nextPosition = new Vector2D(x, y);
-    }
-
-    public void setNextPosition(Vector2D v) {
-        this.nextPosition = v;
-    }
-
     public void setVelocity(final double vx, final double vy) {
         this.velocity = new Vector2D(vx, vy);
     }
 
     public void setVelocity(Vector2D v) {
         this.velocity = v;
-    }
-
-    public void setDesiredVelocity(final double vx, final double vy) {
-        this.desiredVelocity = new Vector2D(vx, vy);
     }
 
     public void setDesiredVelocity(Vector2D v) {
@@ -125,40 +105,8 @@ public class Particle implements Comparable<Particle> {
     //                                        METHODS
     //////////////////////////////////////////////////////////////////////////////////////////
 
-    @Override
-    public String toString() {
-        return String.format("[Particle #%d] {x = %f, y = %f, radius = %f, mass = %f}\n",
-                this.id,
-                this.position.getX(),
-                this.position.getY(),
-                this.radius,
-                this.mass
-        );
-    }
-
     public int compareTo(Particle particle) {
         return Integer.compare(id, particle.getId());
-    }
-
-    /**
-     * Computes the distance between the instance of the particle and other particle
-     *
-     * @param other particle to calculate the distance to
-     * @return distance between the particles
-     */
-    public double distanceTo(Particle other) {
-        return this.position.distance(other.getPosition());
-    }
-
-    /**
-     * Computes the distance between the instance of the particle and other particle,
-     * using the next position for the instance of the particle
-     *
-     * @param other particle to calculate the distance to
-     * @return distance between the particles
-     */
-    public double nextDistanceTo(Particle other) {
-        return this.nextPosition.distance(other.getNextPosition());
     }
 
     /**
@@ -181,17 +129,6 @@ public class Particle implements Comparable<Particle> {
         Vector2D N = goal.subtract(this.position);
         N.normalize();
         return N;
-    }
-
-    /**
-     * Indicates if a particle is invading the personal space of the current one.
-     *
-     * @param particle coming near this
-     * @return boolean indicating if personal space was invaded
-     */
-    public boolean personalSpaceInvadedBy(Particle particle) {
-        double distance = this.getPosition().subtract(particle.getPosition()).getNorm();
-        return distance <= this.getComfortRadius() + particle.getRadius();
     }
 
     /**

@@ -1,6 +1,5 @@
 package pca;
 
-import app.Constants;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
@@ -62,6 +61,7 @@ public class PredictiveCollisionAvoidance {
         return o1.right.right.compareTo(o2.right.right);
     };
     private static final int TIME_LIMIT = 150;
+    private static final int WALLS = 4;
 
     public PredictiveCollisionAvoidance(double dt, double dt2, Collection<Particle> particleList, double areaHeight, double areaWidth, double safeWallDistance, double dmin) {
         this.dt = dt;
@@ -162,7 +162,7 @@ public class PredictiveCollisionAvoidance {
         Vector2D totalForce = Vector2D.ZERO;
 
         // Summing up the force each wall applies to the particle
-        for (int i = 0; i < Constants.WALLS; i++) {
+        for (int i = 0; i < WALLS; i++) {
             Vector2D wallForce = (dw[i] - this.mainParticle.getRadius() >= this.safeWallDistance)
                     ? Vector2D.ZERO
                     : NW[i].scalarMultiply(this.getWallForceScalar(dw[i]));

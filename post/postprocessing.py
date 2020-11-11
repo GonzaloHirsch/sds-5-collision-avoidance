@@ -225,13 +225,13 @@ def plot_graph(x_values, means, std, type):
 
     # Set the x axis label
     # TODO: Ver si es tiempo de anticipacion o DMAX
-    plt.xlabel('D_MIN [m]')
+    plt.xlabel('Dmin [m]')
 
     switcher = {
-        TIME_TRAVELLED: "Tiempo transcurrido [s]",
-        DISTANCE_TRAVELLED: "Distancia recorrida [m]",
-        MEAN_VELOCITY: "Velocidad promedia [m/s]",
-        COLLISION_NUMBER: "Cantidad de colisiones"
+        TIME_TRAVELLED: "Tiempo de Tránsito Medio [s]",
+        DISTANCE_TRAVELLED: "Longitud Recorrida Media [m]",
+        MEAN_VELOCITY: "Velocidad Promedio Media [m/s]",
+        COLLISION_NUMBER: "Cantidad de Colisiones Media"
     }
     y_label = switcher.get(type, ERROR)
 
@@ -242,7 +242,7 @@ def plot_graph(x_values, means, std, type):
     plt.ylabel(y_label)
 
     plt.errorbar(x_values, means, yerr=std, fmt='o', color='black', ecolor='lightgray', elinewidth=3, capsize=0)
-    plt.gca().xaxis.set_minor_locator(MultipleLocator(0.25))
+    plt.gca().xaxis.set_minor_locator(MultipleLocator(0.1))
     plt.show()
 
 
